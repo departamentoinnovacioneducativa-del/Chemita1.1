@@ -3,6 +3,7 @@ from openai import OpenAI
 import streamlit.components.v1 as components
 import os
 import resend
+import json
 from datetime import datetime, timedelta
 
 # CONFIGURACIÓN DE PÁGINA
@@ -26,23 +27,15 @@ css_chemita = """
     .stDeployButton {display: none;}
 
     .stApp {
-        max-width: 100%; 
-        padding: 0; 
-        background-color: #001F3F !important; 
+        max-width: 100%; padding: 0; background-color: #001F3F !important; 
     }
     .stApp > div {
-        border: 8px solid #2ECC71 !important; 
-        border-radius: 15px;
-        overflow: hidden; 
-        box-sizing: border-box; 
+        border: 8px solid #2ECC71 !important; border-radius: 15px;
+        overflow: hidden; box-sizing: border-box; 
     }
-    [data-testid="stBlock"] {
-        padding: 15px;
-    }
-    div[data-testid="stImageContainer"] {
-        margin: 0 0 15px 0 !important;
-        padding: 0 !important;
-    }
+    [data-testid="stBlock"] { padding: 15px; }
+    
+    div[data-testid="stImageContainer"] { margin: 0 0 15px 0 !important; padding: 0 !important; }
     div[data-testid="stImageContainer"] img {
         width: 100% !important; height: auto !important; max-height: 250px; 
         object-fit: cover !important; border-radius: 10px; border: 3px solid #2ECC71; 
@@ -53,9 +46,7 @@ css_chemita = """
         padding: 15px; margin: 10px 0; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         color: #333 !important; 
     }
-    [data-testid="stChatInput"] {
-        background-color: transparent !important; padding-bottom: 10px;
-    }
+    [data-testid="stChatInput"] { background-color: transparent !important; padding-bottom: 10px; }
     [data-testid="stChatInput"] > div {
         border-radius: 25px; border: 2px solid #2ECC71 !important; 
         background-color: white !important; padding: 5px 15px !important;
@@ -74,12 +65,28 @@ css_chemita = """
         background-color: #2ECC71 !important; color: white !important; font-weight: bold;
         border-radius: 20px; border: none; padding: 10px 15px; transition: transform 0.2s, background-color 0.2s;
     }
-    .stButton button:hover {
-        transform: scale(1.03); background-color: #27AE60 !important; 
+    .stButton button:hover { transform: scale(1.03); background-color: #27AE60 !important; }
+    
+    /* Estilo del Login */
+    .login-box {
+        background-color: #FFFDE0; padding: 30px; border-radius: 15px; margin-top: 20px;
     }
 </style>
 """
 st.markdown(css_chemita, unsafe_allow_html=True)
+
+# --- GESTIÓN DE BASE DE DATOS JSON ---
+DB_FILE = "usuarios.json"
+
+def cargar_usuarios():
+    if os.path.exists(DB_FILE):
+        with open(DB_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+def guardar_usuarios(usuarios):
+    with open(DB_FILE, "w") as f:
+        json.dump(usuarios, f, indent=4)
 
 # --- SISTEMA DE SEGURIDAD Y NOTIFICACIONES ---
 def enviar_correo(asunto, mensaje):
@@ -92,56 +99,97 @@ def enviar_correo(asunto, mensaje):
             "subject": asunto,
             "text": mensaje
         })
+        st.toast("✉️ Correo de notificación enviado al administrador.")
     except Exception as e:
-        pass # Silenciamos errores de correo para que no le afecte al niño
+        st.error(f"Error al enviar correo: {e}")
 
 def revisar_seguridad(texto):
     texto_lower = texto.lower()
     
-    # 1. Detección de riesgo suicida o autolesiones
+    # 1. Detección de riesgo suicida
     palabras_peligro = ["suicid", "matarme", "hacerme daño", "no quiero vivir", "acabar con todo", "cortarme", "ahogarme", "saltar desde"]
     if any(palabra in texto_lower for palabra in palabras_peligro):
-        mensaje_alerta = f"🚨 ALERTA DE SEGURIDAD GRAVE 🚨\n\nUn usuario escribió algo preocupante:\n\n'{texto}'\n\nPor favor, verifica de inmediato."
-        enviar_correo("🚨 ALERTA GRAVE en Chemita", mensaje_alerta)
         return "peligro"
     
-    # 2. Detección de groserías o lenguaje inapropiado
+    # 2. Detección de groserías
     groserias = ["pendejo", "estupido", "idiota", "imbecil", "maldito", "puto", "puta", "mierda", "joder", "cabron", "marica", "verga"]
     if any(groseria in texto_lower for groseria in groserias):
         return "bloqueo"
         
     return "ok"
 
-# --- CONFIGURACIÓN INICIAL DE SESIÓN ---
+# --- INICIALIZACIÓN DE SESIÓN ---
+if "autenticado" not in st.session_state:
+    st.session_state.autenticado = False
+if "usuario_actual" not in st.session_state:
+    st.session_state.usuario_actual = None
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "last_response" not in st.session_state:
     st.session_state.last_response = ""
-if "bloqueado_hasta" not in st.session_state:
-    st.session_state.bloqueado_hasta = None
-if "id_usuario" not in st.session_state:
-    st.session_state.id_usuario = "Usuario_" + os.urandom(4).hex()
 
-# --- VERIFICACIÓN DE BLOQUEO ---
-if st.session_state.bloqueado_hasta and datetime.now() < st.session_state.bloqueado_hasta:
-    tiempo_restante = st.session_state.bloqueado_hasta - datetime.now()
-    horas = int(tiempo_restante.total_seconds() // 3600)
-    minutos = int((tiempo_restante.total_seconds() % 3600) // 60)
-    st.error(f"⏳ ¡Oops! Has sido suspendido por usar palabras inapropiadas. Vuelve en {horas} horas y {minutos} minutos para reflexionar sobre tus acciones. ¡Adelante, siempre adelante!")
-    st.stop()
-
-# --- FUNCIÓN PARA MOSTRAR BANNER Y TÍTULO ---
+# --- FUNCIÓN PARA MOSTRAR BANNER ---
 def mostrar_titulo_chemita():
     if os.path.exists("chemita.png"):
         st.image("chemita.png", use_container_width=True)
     else:
-        st.warning("🖼️ Falta subir el archivo 'chemita.png' a GitHub en la misma carpeta que app.py")
+        st.warning("🖼️ Falta subir 'chemita.png'")
     st.markdown('<h1 class="custom-title-chemita">Chemita</h1>', unsafe_allow_html=True)
     st.markdown('<p class="custom-subtitle-chemita">✨ Tu amigo siempre útil y empático ✨</p>', unsafe_allow_html=True)
 
+# ==========================================
+# PANTALLA DE LOGIN (SI NO ESTÁ AUTENTICADO)
+# ==========================================
+if not st.session_state.autenticado:
+    mostrar_titulo_chemita()
+    
+    with st.container():
+        st.markdown('<div class="login-box">', unsafe_allow_html=True)
+        st.subheader("🔒 Iniciar Sesión")
+        usuario_input = st.text_input("Nombre de usuario")
+        password_input = st.text_input("Contraseña", type="password")
+        
+        if st.button("Entrar", use_container_width=True):
+            usuarios = cargar_usuarios()
+            if usuario_input in usuarios:
+                # Verificar bloqueo de 24 horas
+                bloqueado_hasta_str = usuarios[usuario_input].get("bloqueado_hasta")
+                if bloqueado_hasta_str:
+                    bloqueado_hasta = datetime.fromisoformat(bloqueado_hasta_str)
+                    if datetime.now() < bloqueado_hasta:
+                        tiempo_restante = bloqueado_hasta - datetime.now()
+                        horas = int(tiempo_restante.total_seconds() // 3600)
+                        minutos = int((tiempo_restante.total_seconds() % 3600) // 60)
+                        st.error(f"⏳ ¡Oops! Estás suspendido por usar palabras inapropiadas. Vuelve en {horas}h y {minutos}m. ¡Reflexiona!")
+                        st.stop()
+                
+                # Verificar contraseña
+                if usuarios[usuario_input]["password"] == password_input:
+                    st.session_state.autenticado = True
+                    st.session_state.usuario_actual = usuario_input
+                    st.rerun()
+                else:
+                    st.error("❌ Contraseña incorrecta.")
+            else:
+                st.error("❌ El usuario no existe. Pide a tu maestro que te dé una cuenta.")
+        st.markdown('</div>', unsafe_allow_html=True)
+    st.stop()
+
+# ==========================================
+# APP PRINCIPAL (SI ESTÁ AUTENTICADO)
+# ==========================================
 mostrar_titulo_chemita()
 
-# --- CONEXIÓN CON GROQ ---
+# Botón de cerrar sesión en la parte superior
+col_cerrar1, col_cerrar2, col_cerrar3 = st.columns([2, 1, 1])
+with col_cerrar3:
+    if st.button("🚪 Salir"):
+        st.session_state.autenticado = False
+        st.session_state.usuario_actual = None
+        st.session_state.messages = []
+        st.rerun()
+
+# CONEXIÓN CON GROQ
 try:
     client = OpenAI(
         base_url="https://api.groq.com/openai/v1",
@@ -163,8 +211,8 @@ SYSTEM_PROMPT = """Eres CHEMITA, un amigo virtual empático, saludable y un tuto
 - Sigues las enseñanzas de San José, por lo que eres trabajador, amable y noble.
 
 **CÓMO INTERACTÚAS (TUTOR SOCRÁTICO):**
-1. **Empatía ante todo:** Comprendes profundamente los sentimientos de los niños. Usas frases como: "Entiendo que te sientas así", "No te preocupes, juntos lo resolvemos".
-2. **Método Socrático:** ¡Eres un guía, NO un banco de respuestas! NUNCA des respuestas directas a tareas. Haz preguntas paso a paso para que el niño razone.
+1. **Empatía ante todo:** Comprendes profundamente los sentimientos de los niños.
+2. **Método Socrático:** ¡Eres un guía, NO un banco de respuestas! NUNCA des respuestas directas a tareas. Haz preguntas paso a paso.
 3. **Lenguaje amigable:** Hablas de forma clara y divertida. Usas emojis (🏃‍♂️⚽🎨📺✨😊).
 
 **REGLAS IMPORTANTES:**
@@ -174,7 +222,7 @@ SYSTEM_PROMPT = """Eres CHEMITA, un amigo virtual empático, saludable y un tuto
 """
 
 if not st.session_state.messages:
-    bienvenida = "✨ ¡Hola! ¡Soy Chemita! Tu amigo y tutor siempre útil. ¡Adelante siempre adelante! ¿En qué te ayudo a pensar hoy? 😊⚽🎨"
+    bienvenida = f"✨ ¡Hola, {st.session_state.usuario_actual}! ¡Soy Chemita! Tu amigo y tutor. ¡Adelante siempre adelante! ¿En qué te ayudo a pensar hoy? 😊⚽🎨"
     st.session_state.messages.append({"role": "assistant", "content": bienvenida})
     st.session_state.last_response = bienvenida
 
@@ -205,7 +253,6 @@ def speak_js(text):
 
 # --- PROCESAMIENTO DE MENSAJES ---
 def procesar_respuesta(user_input):
-    # Revisión de seguridad antes de enviar a la IA
     estado = revisar_seguridad(user_input)
     
     if estado == "peligro":
@@ -217,21 +264,25 @@ def procesar_respuesta(user_input):
             st.markdown(msg_apoyo)
         st.session_state.messages.append({"role": "assistant", "content": msg_apoyo})
         st.session_state.last_response = msg_apoyo
-        # Enviar log de conversación por correo
+        
         historial = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
-        enviar_correo("📜 Historial de Conversación - ALERTA", f"Se activó una alerta de seguridad. Historial:\n\n{historial}")
+        enviar_correo(f"🚨 ALERTA GRAVE - Usuario: {st.session_state.usuario_actual}", f"El usuario {st.session_state.usuario_actual} escribió algo preocupante.\n\nHistorial:\n\n{historial}")
         return
 
     elif estado == "bloqueo":
         st.session_state.messages.append({"role": "user", "content": user_input})
-        # Bloquear por 24 horas
-        st.session_state.bloqueado_hasta = datetime.now() + timedelta(hours=24)
+        
+        # ACTUALIZAR BASE DE DATOS PARA BLOQUEAR 24H
+        usuarios = cargar_usuarios()
+        if st.session_state.usuario_actual in usuarios:
+            usuarios[st.session_state.usuario_actual]["bloqueado_hasta"] = (datetime.now() + timedelta(hours=24)).isoformat()
+            guardar_usuarios(usuarios)
+            
         msg_bloqueo = "🚫 ¡Oops! Usaste palabras inapropiadas. Como buen josefino, debemos ser amables y respetuosos. Has sido suspendido por 24 horas. Usa este tiempo para reflexionar. ¡Hasta pronto!"
         st.session_state.messages.append({"role": "assistant", "content": msg_bloqueo})
-        st.session_state.last_response = msg_bloqueo
-        # Enviar alerta al admin
-        enviar_correo("⚠️ Usuario bloqueado por groserías", f"El usuario {st.session_state.id_usuario} dijo:\n\n{user_input}\n\nY ha sido bloqueado 24h.")
-        st.rerun() # Recarga la app para activar la pantalla de bloqueo
+        
+        enviar_correo(f"⚠️ Usuario bloqueado: {st.session_state.usuario_actual}", f"El usuario {st.session_state.usuario_actual} dijo:\n\n{user_input}\n\nY ha sido bloqueado 24h en la base de datos.")
+        st.rerun()
 
     # Si todo está bien, procesa con Groq
     with st.chat_message("user"):
@@ -251,12 +302,6 @@ def procesar_respuesta(user_input):
                 response = st.write_stream(stream)
                 st.session_state.messages.append({"role": "assistant", "content": response})
                 st.session_state.last_response = response
-                
-                # Enviar historial cada 10 mensajes para no saturar el correo
-                if len(st.session_state.messages) % 10 == 0:
-                    historial = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
-                    enviar_correo("📜 Registro de Conversación de Chemita", f"El usuario {st.session_state.id_usuario} lleva este historial:\n\n{historial}")
-
             except Exception as e:
                 st.error(f"✨ Ups... Chemita tuvo un problema: {str(e)}")
 

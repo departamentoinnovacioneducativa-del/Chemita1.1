@@ -64,12 +64,24 @@ css_chemita = """
     }
     .stButton button {
         background-color: #2ECC71 !important; color: white !important; font-weight: bold;
-        border-radius: 20px; border: none; padding: 10px 15px; transition: transform 0.2s, background-color 0.2s;
+        border-radius: 20px; border: none; padding: 5px 10px; transition: transform 0.2s, background-color 0.2s;
+        font-size: 0.8em;
     }
     .stButton button:hover { transform: scale(1.03); background-color: #27AE60 !important; }
     
     .login-box {
         background-color: #FFFDE0; padding: 30px; border-radius: 15px; margin-top: 20px;
+    }
+    
+    /* Hacer circulares las imágenes de los botones de sombreros */
+    div[data-testid="stHorizontalBlock"] > div > div > div[data-testid="stImageContainer"] img {
+        border-radius: 50% !important;
+        max-height: 80px !important;
+        width: 80px !important;
+        object-fit: cover !important;
+        margin: 0 auto !important;
+        display: block !important;
+        border: 3px solid #FFE484 !important;
     }
 </style>
 """
@@ -140,6 +152,8 @@ if "last_response" not in st.session_state:
     st.session_state.last_response = ""
 if "cooldown_hasta" not in st.session_state:
     st.session_state.cooldown_hasta = None
+if "sombrero_seleccionado" not in st.session_state:
+    st.session_state.sombrero_seleccionado = "Hechos"
 
 def mostrar_titulo_chemita():
     if os.path.exists("chemita.png"):
@@ -196,56 +210,95 @@ with col_cerrar3:
         st.session_state.messages = []
         st.rerun()
 
-# --- DEFINICIÓN DE LOS SOMBREROS DE BONO (SIN API KEYS AQUÍ) ---
+# --- DEFINICIÓN DE LOS CHEMITAS (SOMBREROS + JOSEFINO) ---
 SOMBREROS = {
-    "Blanco": {
+    "Hechos": {
         "emoji": "🤍",
-        "prompt": """Eres CHEMITA (Sombrero Blanco). Eres un amigo empático y tutor académico para niños. 
+        "imagen": "chema_hechos.png",
+        "api_key_name": "api_key_blanco",
+        "prompt": """Eres CHEMITA (Hechos). Eres un amigo empático y tutor académico para niños. 
 Tu enfoque son los HECHOS y los DATOS. Hablas de forma objetiva. 
 Pides al niño que observe qué información tienen, qué saben y qué necesitan saber.
 Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🔍📚📊. Lema: "¡Adelante siempre adelante!"."""
     },
-    "Rojo": {
+    "Emociones": {
         "emoji": "❤️",
-        "prompt": """Eres CHEMITA (Sombrero Rojo). Eres un amigo empático y tutor académico para niños.
+        "imagen": "chema_emociones.png",
+        "api_key_name": "api_key_rojo",
+        "prompt": """Eres CHEMITA (Emociones). Eres un amigo empático y tutor académico para niños.
 Tu enfoque son las EMOCIONES y los SENTIMIENTOS. Preguntas al niño cómo se siente frente al problema o si le da miedo/frustra algo.
 Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como ❤️🤗😰. Lema: "¡Adelante siempre adelante!"."""
     },
-    "Negro": {
+    "Cautela": {
         "emoji": "🖤",
-        "prompt": """Eres CHEMITA (Sombrero Negro). Eres un amigo empático y tutor académico para niños.
+        "imagen": "chema_cautela.png",
+        "api_key_name": "api_key_negro",
+        "prompt": """Eres CHEMITA (Cautela). Eres un amigo empático y tutor académico para niños.
 Tu enfoque es la CAUTELA y los RIESGOS. Ayudas al niño a ver por qué una respuesta podría estar mal o qué riesgos hay.
 Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🛡️🤔⚠️. Lema: "¡Adelante siempre adelante!"."""
     },
-    "Amarillo": {
+    "Optimismo": {
         "emoji": "💛",
-        "prompt": """Eres CHEMITA (Sombrero Amarillo). Eres un amigo empático y tutor académico para niños.
+        "imagen": "chema_optimismo.png",
+        "api_key_name": "api_key_amarillo",
+        "prompt": """Eres CHEMITA (Optimismo). Eres un amigo empático y tutor académico para niños.
 Tu enfoque es el OPTIMISMO y los BENEFICIOS. Ayudas al niño a ver lo positivo de su intento y a encontrar el camino correcto.
 Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como ☀️🌟💪. Lema: "¡Adelante siempre adelante!"."""
     },
-    "Verde": {
+    "Creativo": {
         "emoji": "💚",
-        "prompt": """Eres CHEMITA (Sombrero Verde). Eres un amigo empático y tutor académico para niños.
+        "imagen": "chema_creativo.png",
+        "api_key_name": "api_key_verde",
+        "prompt": """Eres CHEMITA (Creativo). Eres un amigo empático y tutor académico para niños.
 Tu enfoque es la CREATIVIDAD y las ALTERNATIVAS. Pides al niño que piense en soluciones locas o diferentes formas de resolver el problema.
 Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🎨🚀💡. Lema: "¡Adelante siempre adelante!"."""
     },
-    "Azul": {
+    "Organizador": {
         "emoji": "💙",
-        "prompt": """Eres CHEMITA (Sombrero Azul). Eres un amigo empático y tutor académico para niños.
+        "imagen": "chema_organizador.png",
+        "api_key_name": "api_key_azul",
+        "prompt": """Eres CHEMITA (Organizador). Eres un amigo empático y tutor académico para niños.
 Tu enfoque es el CONTROL y la ORGANIZACIÓN. Ayudas al niño a ver el panorama completo, a hacer resúmenes y a decidir cuál es el siguiente paso lógico.
 Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🧠📝🔷. Lema: "¡Adelante siempre adelante!"."""
+    },
+    "Josefino": {
+        "emoji": "🙏",
+        "imagen": "chema_josefino.png",
+        "api_key_name": "api_key_josefino",
+        "prompt": """Eres CHEMITA (Josefino). Eres un amigo empático y tutor académico para niños.
+Tu enfoque es la VISIÓN DEL PADRE JOSÉ MARÍA VILASECA y el INSTITUTO JUVENTUD DEL ESTADO DE MÉXICO. 
+Promueves la fe, el trabajo, la honestidad, la paz y el amor por México. Pides al niño que actúe con responsabilidad, respeto y patriotismo.
+Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🙏🇲🇽⛪. Lema: "¡Adelante siempre adelante!"."""
     }
 }
 
-# Selección del Sombrero
-st.markdown("#### 🎩 ¿Con qué Chemita quieres pensar ahora?")
-sombreros_opciones = ["🤍 Blanco (Hechos)", "❤️ Rojo (Emociones)", "🖤 Negro (Cautela)", "💛 Amarillo (Optimismo)", "💚 Verde (Creatividad)", "💙 Azul (Organización)"]
-sombrero_seleccionado = st.radio("Elige un sombrero:", sombreros_opciones, horizontal=True, label_visibility="collapsed")
-sombrero_key = sombrero_seleccionado.split(" ")[1] # Extrae la palabra (Blanco, Rojo, etc.)
-# Obtener el prompt y el avatar del sombrero seleccionado
-config_sombrero = SOMBREROS.get(sombrero_key, SOMBREROS["Blanco"])
+# --- INTERFAZ DE BOTONES CON IMÁGENES ---
+st.markdown("#### 🎩 ¿Con qué Chema quieres pensar ahora?")
+
+# Crear 7 columnas para los 7 botones
+cols = st.columns(7)
+keys_sombreros = list(SOMBREROS.keys())
+
+for i, key in enumerate(keys_sombreros):
+    with cols[i]:
+        img_file = SOMBREROS[key]["imagen"]
+        if os.path.exists(img_file):
+            st.image(img_file, use_container_width=True)
+        else:
+            st.warning(f"Falta {img_file}", icon="🖼️")
+            
+        # El botón tendrá el nombre de la personalidad
+        if st.button(key, key=f"btn_{key}", use_container_width=True):
+            st.session_state.sombrero_seleccionado = key
+            st.rerun()
+
+# Obtener la configuración del sombrero seleccionado actualmente
+sombrero_key = st.session_state.sombrero_seleccionado
+config_sombrero = SOMBREROS[sombrero_key]
 SYSTEM_PROMPT_ACTUAL = config_sombrero["prompt"]
 AVATAR_ACTUAL = config_sombrero["emoji"]
+
+st.info(f"Actualmente hablando con: **Chema {sombrero_key}** {AVATAR_ACTUAL}")
 
 if not st.session_state.messages:
     bienvenida = f"✨ ¡Hola, {st.session_state.usuario_actual}! ¡Soy Chemita! Tu amigo y tutor. ¡Adelante siempre adelante! ¿En qué te ayudo a pensar hoy? 😊⚽🎨"
@@ -316,19 +369,15 @@ def procesar_respuesta(user_input):
     st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "🧒"})
 
     with st.chat_message("assistant", avatar=AVATAR_ACTUAL):
-        with st.spinner(f"✨ Chemita {sombrero_key} está pensando..."):
+        with st.spinner(f"✨ Chema {sombrero_key} está pensando..."):
             try:
-                # Ahorro de tokens: últimos 10 mensajes
                 historial_reciente = st.session_state.messages[-10:]
-                
-                # Preparamos los mensajes para la API (quitamos el avatar)
                 mensajes_api = [{"role": "system", "content": SYSTEM_PROMPT_ACTUAL}]
                 for msg in historial_reciente:
                     mensajes_api.append({"role": msg["role"], "content": msg["content"]})
                 
-                # OBTENER API KEY DESDE SECRETS BASADO EN EL SOMBRERO
-                # Convierte "🤍" a "blanco", "❤️" a "rojo", etc.
-                key_name = f"api_key_{sombrero_key.lower()}" 
+                # Obtener el nombre de la API Key desde secrets
+                key_name = config_sombrero["api_key_name"]
                 api_key_a_usar = st.secrets["groq"][key_name]
                 
                 client = OpenAI(
@@ -369,7 +418,7 @@ else:
     if st.session_state.cooldown_hasta:
         st.session_state.cooldown_hasta = None 
 
-    placeholder_text = f"✏️ Escribe tu pregunta a Chemita {sombrero_key}... 😊🏃‍♂️"
+    placeholder_text = f"✏️ Escribe tu pregunta a Chema {sombrero_key}... 😊🏃‍♂️"
     if prompt := st.chat_input(placeholder_text):
         procesar_respuesta(prompt)
 

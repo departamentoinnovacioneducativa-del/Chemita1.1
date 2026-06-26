@@ -1,5 +1,10 @@
 {
-  "Adrian": {
+  "admin": {
+    "password": "tu_clave_secreta_aqui",
+    "bloqueado_hasta": null,
+    "ultimo_correo": null
+  },
+  "nino_prueba": {
     "password": "1234",
     "bloqueado_hasta": null,
     "ultimo_correo": null

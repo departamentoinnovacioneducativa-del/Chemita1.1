@@ -1,6 +1,7 @@
 {
-  "Adrian": {
+  "nino_prueba": {
     "password": "1234",
-    "bloqueado_hasta": null
+    "bloqueado_hasta": null,
+    "ultimo_correo": null
   }
 }

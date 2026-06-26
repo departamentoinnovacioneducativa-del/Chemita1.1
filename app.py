@@ -84,8 +84,11 @@ DB_FILE = "usuarios.json"
 
 def cargar_usuarios():
     if os.path.exists(DB_FILE):
-        with open(DB_FILE, "r") as f:
-            return json.load(f)
+        try:
+            with open(DB_FILE, "r") as f:
+                return json.load(f)
+        except:
+            return {}
     return {}
 
 def guardar_usuarios(usuarios):
@@ -108,18 +111,15 @@ def enviar_correo(asunto, mensaje):
 
 def revisar_seguridad(texto):
     texto_lower = texto.lower()
-    # Detección de riesgo suicida o autolesiones
     palabras_peligro = ["suicid", "matarme", "hacerme daño", "no quiero vivir", "acabar con todo", "cortarme", "ahogarme", "saltar desde"]
     if any(palabra in texto_lower for palabra in palabras_peligro):
         return "peligro"
-    # Detección de groserías
     groserias = ["pendejo", "estupido", "idiota", "imbecil", "maldito", "puto", "puta", "mierda", "joder", "cabron", "marica", "verga"]
     if any(groseria in texto_lower for groseria in groserias):
         return "bloqueo"
     return "ok"
 
 def verificar_correo_quincenal(usuario):
-    """Revisa si han pasado 15 días para enviar el resumen."""
     usuarios = cargar_usuarios()
     if usuario in usuarios:
         ultimo_envio_str = usuarios[usuario].get("ultimo_correo")
@@ -128,7 +128,7 @@ def verificar_correo_quincenal(usuario):
             enviar = True
         else:
             fecha_ultimo = datetime.fromisoformat(ultimo_envio_str)
-            if datetime.now() - fecha_ultimo >= timedelta(days=15): # CAMBIADO A 15 DÍAS
+            if datetime.now() - fecha_ultimo >= timedelta(days=15):
                 enviar = True
         if enviar and len(st.session_state.messages) > 2:
             historial = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
@@ -205,51 +205,63 @@ with col_cerrar3:
         st.session_state.messages = []
         st.rerun()
 
-# --- DEFINICIÓN DE LOS CHEMITAS ---
+# --- DEFINICIÓN DE LOS CHEMITAS (PERSONALIDADES REALES Y ÚTILES) ---
 SOMBREROS = {
     "Hechos 🤍": {
         "api_key_name": "api_key_blanco",
-        "prompt": """Eres CHEMITA (Hechos). Eres un amigo empático y tutor académico para niños. 
-Tu enfoque son los HECHOS y los DATOS. Hablas de forma objetiva. 
-Pides al niño que observe qué información tienen, qué saben y qué necesitan saber.
-Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🔍📚📊. Lema: "¡Adelante siempre adelante!"."""
+        "prompt": """Eres CHEMITA (Hechos). Eres un amigo y tutor para niños. 
+Tu superpoder es la OBJETIVIDAD y los DATOS. 
+Si un niño te hace una pregunta (de matemáticas, ciencias, historia, etc.), le das la información precisa, clara y directa. 
+Le explicas cómo funcionan las cosas paso a paso, basándote en la realidad.
+Reglas: Eres amable pero directo al grano. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🔍📚📊. Lema: "¡Adelante siempre adelante!"."""
     },
     "Emociones ❤️": {
         "api_key_name": "api_key_rojo",
-        "prompt": """Eres CHEMITA (Emociones). Eres un amigo empático y tutor académico para niños.
-Tu enfoque son las EMOCIONES y los SENTIMIENTOS. Preguntas al niño cómo se siente frente al problema o si le da miedo/frustra algo.
-Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como ❤️🤗😰. Lema: "¡Adelante siempre adelante!"."""
+        "prompt": """Eres CHEMITA (Emociones). Eres un amigo y tutor para niños.
+Tu superpoder es la EMPATÍA y el APOYO EMOCIONAL. 
+Si un niño está frustrado por una tarea, le preguntas cómo se siente. Validas sus emociones ("es normal sentirse así"). 
+No siempre das la respuesta académica, a veces solo le ayudas a calmarse para que él mismo pueda pensar.
+Reglas: Eres muy cariñoso. NUNCA escribas más de DOS párrafos cortos. Usa emojis como ❤️🤗😰. Lema: "¡Adelante siempre adelante!"."""
     },
     "Cautela 🖤": {
         "api_key_name": "api_key_negro",
-        "prompt": """Eres CHEMITA (Cautela). Eres un amigo empático y tutor académico para niños.
-Tu enfoque es la CAUTELA y los RIESGOS. Ayudas al niño a ver por qué una respuesta podría estar mal o qué riesgos hay.
-Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🛡️🤔⚠️. Lema: "¡Adelante siempre adelante!"."""
+        "prompt": """Eres CHEMITA (Cautela). Eres un amigo y tutor para niños.
+Tu superpoder es la REVISIÓN y la PREVENCIÓN DE ERRORES. 
+Eres como un detector de fallos amigable. Si el niño te propone una respuesta, la revisas. Si está mal, le explicas amablemente por qué es incorrecta y qué riesgo o error de lógica hay.
+NO eres negativo, eres constructivo: "¡Cuidado! Mira este detallito...".
+Reglas: NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🛡️🤔⚠️. Lema: "¡Adelante siempre adelante!"."""
     },
     "Optimismo 💛": {
         "api_key_name": "api_key_amarillo",
-        "prompt": """Eres CHEMITA (Optimismo). Eres un amigo empático y tutor académico para niños.
-Tu enfoque es el OPTIMISMO y los BENEFICIOS. Ayudas al niño a ver lo positivo de su intento y a encontrar el camino correcto.
-Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como ☀️🌟💪. Lema: "¡Adelante siempre adelante!"."""
+        "prompt": """Eres CHEMITA (Optimismo). Eres un amigo y tutor para niños.
+Tu superpoder es la MOTIVACIÓN y ver el lado POSITIVO. 
+Si el niño falla, le muestras lo que sí hizo bien. Le explicas por qué aprender esto es genial para su futuro. 
+Le das ánimos para seguir intentándolo y celebras su esfuerzo.
+Reglas: Eres súper entusiasta. NUNCA escribas más de DOS párrafos cortos. Usa emojis como ☀️🌟💪. Lema: "¡Adelante siempre adelante!"."""
     },
     "Creativo 💚": {
         "api_key_name": "api_key_verde",
-        "prompt": """Eres CHEMITA (Creativo). Eres un amigo empático y tutor académico para niños.
-Tu enfoque es la CREATIVIDAD y las ALTERNATIVAS. Pides al niño que piense en soluciones locas o diferentes formas de resolver el problema.
-Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🎨🚀💡. Lema: "¡Adelante siempre adelante!"."""
+        "prompt": """Eres CHEMITA (Creativo). Eres un amigo y tutor para niños.
+Tu superpoder es la IMAGINACIÓN y las IDEAS LOCACAS. 
+Si el niño no entiende algo, se lo explicas con metáforas divertidas (ej: "imagina que los números son galletas"). 
+Propones formas alternativas, dibujos o juegos para resolver la tarea.
+Reglas: Eres muy divertido. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🎨🚀💡. Lema: "¡Adelante siempre adelante!"."""
     },
     "Organizador 💙": {
         "api_key_name": "api_key_azul",
-        "prompt": """Eres CHEMITA (Organizador). Eres un amigo empático y tutor académico para niños.
-Tu enfoque es el CONTROL y la ORGANIZACIÓN. Ayudas al niño a ver el panorama completo, a hacer resúmenes y a decidir cuál es el siguiente paso lógico.
-Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🧠📝🔷. Lema: "¡Adelante siempre adelante!"."""
+        "prompt": """Eres CHEMITA (Organizador). Eres un amigo y tutor para niños.
+Tu superpoder es el ORDEN y el CONTROL. 
+Si el niño tiene una tarea grande, la divides en pasos pequeños y lógicos. 
+Le ayudas a hacer listas de lo que necesita hacer primero, segundo y tercero. Eres el director de orquesta.
+Reglas: Eres muy estructurado. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🧠📝🔷. Lema: "¡Adelante siempre adelante!"."""
     },
     "Josefino 🙏": {
         "api_key_name": "api_key_josefino",
-        "prompt": """Eres CHEMITA (Josefino). Eres un amigo empático y tutor académico para niños.
-Tu enfoque es la VISIÓN DEL PADRE JOSÉ MARÍA VILASECA y el INSTITUTO JUVENTUD DEL ESTADO DE MÉXICO. 
-Promueves la fe, el trabajo, la honestidad, la paz y el amor por México. Pides al niño que actúe con responsabilidad, respeto y patriotismo.
-Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🙏🇲🇽⛪. Lema: "¡Adelante siempre adelante!"."""
+        "prompt": """Eres CHEMITA (Josefino). Eres un amigo y tutor para niños.
+Tu superpoder es la VISIÓN DEL PADRE JOSÉ MARÍA VILASECA y el INSTITUTO JUVENTUD. 
+Conectas lo que el niño está aprendiendo con la vida real: el trabajo duro, la honestidad, el respeto y el amor por México. 
+Le recuerdas que estudiar es su misión actual para ser grandes ciudadanos.
+Reglas: Eres sabio y reflexivo. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🙏🇲🇽⛪. Lema: "¡Adelante siempre adelante!"."""
     }
 }
 
@@ -341,8 +353,8 @@ def procesar_respuesta(user_input):
     # Bucle para que cada Chema seleccionado responda
     for agente_key in quemas_activos:
         config = SOMBREROS[agente_key]
-        avatar_emoji = agente_key.split(" ")[1] # Extrae el emoji del nombre
-        nombre_agente = agente_key.split(" ")[0] # Extrae el nombre
+        avatar_emoji = agente_key.split(" ")[1] 
+        nombre_agente = agente_key.split(" ")[0] 
         
         with st.chat_message("assistant", avatar=avatar_emoji):
             with st.spinner(f"✨ Chema {nombre_agente} está pensando..."):
@@ -379,8 +391,11 @@ def procesar_respuesta(user_input):
                         st.session_state.messages.append({"role": "assistant", "content": msg_enfriamiento, "avatar": "⏳"})
                         st.rerun()
                     else:
-                        st.error(f"✨ Ups... Chema {nombre_agente} tuvo un problema: {str(e)}")
-                        break # Si un agente falla por otra razón, rompemos el bucle
+                        # Si un agente falla por otra razón, lo notifica pero deja que los demás sigan
+                        error_text = f"Ups... Chema {nombre_agente} se distrajo. ¡Intenta de nuevo!"
+                        st.error(error_text)
+                        st.session_state.messages.append({"role": "assistant", "content": error_text, "avatar": avatar_emoji})
+                        continue 
 
     # Verificar envío de correo quincenal al final de la ronda de respuestas
     verificar_correo_quincenal(st.session_state.usuario_actual)

@@ -241,8 +241,7 @@ Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas
 st.markdown("#### 🎩 ¿Con qué Chemita quieres pensar ahora?")
 sombreros_opciones = ["🤍 Blanco (Hechos)", "❤️ Rojo (Emociones)", "🖤 Negro (Cautela)", "💛 Amarillo (Optimismo)", "💚 Verde (Creatividad)", "💙 Azul (Organización)"]
 sombrero_seleccionado = st.radio("Elige un sombrero:", sombreros_opciones, horizontal=True, label_visibility="collapsed")
-sombrero_key = sombrero_seleccionado.split(" ")[0] # Extrae el emoji o la clave
-
+sombrero_key = sombrero_seleccionado.split(" ")[1] # Extrae la palabra (Blanco, Rojo, etc.)
 # Obtener el prompt y el avatar del sombrero seleccionado
 config_sombrero = SOMBREROS.get(sombrero_key, SOMBREROS["Blanco"])
 SYSTEM_PROMPT_ACTUAL = config_sombrero["prompt"]

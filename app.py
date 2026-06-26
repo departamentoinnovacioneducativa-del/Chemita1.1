@@ -67,7 +67,6 @@ css_chemita = """
     }
     .stButton button:hover { transform: scale(1.03); background-color: #27AE60 !important; }
     
-    /* Estilo del Login */
     .login-box {
         background-color: #FFFDE0; padding: 30px; border-radius: 15px; margin-top: 20px;
     }
@@ -94,14 +93,16 @@ def enviar_correo(asunto, mensaje):
         resend.api_key = st.secrets["resend"]["api_key"]
         admin_email = st.secrets["admin"]["email"]
         r = resend.Emails.send({
-            "from": "Chemita App <onboarding@resend.dev>",
+            "from": "onboarding@resend.dev", # Formato exigido por Resend en versión gratuita
             "to": [admin_email],
             "subject": asunto,
             "text": mensaje
         })
-        st.toast("✉️ Correo de notificación enviado al administrador.")
+        # Mostramos un pequeño aviso solo si se envía correctamente
+        st.toast("✉️ Notificación enviada al administrador.")
     except Exception as e:
-        st.error(f"Error al enviar correo: {e}")
+        # Ocultamos el error al niño, pero lo imprimimos en los logs de Streamlit para el admin
+        print(f"Error al enviar correo: {e}")
 
 def revisar_seguridad(texto):
     texto_lower = texto.lower()
@@ -117,6 +118,26 @@ def revisar_seguridad(texto):
         return "bloqueo"
         
     return "ok"
+
+def verificar_correo_semanal(usuario):
+    """Revisa si ha pasado una semana desde el último envío. Si es así, envía el historial."""
+    usuarios = cargar_usuarios()
+    if usuario in usuarios:
+        ultimo_envio_str = usuarios[usuario].get("ultimo_correo")
+        enviar = False
+        
+        if not ultimo_envio_str:
+            enviar = True # Nunca se ha enviado un correo
+        else:
+            fecha_ultimo = datetime.fromisoformat(ultimo_envio_str)
+            if datetime.now() - fecha_ultimo >= timedelta(days=7):
+                enviar = True # Ya pasaron 7 días
+                
+        if enviar and len(st.session_state.messages) > 2:
+            historial = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
+            enviar_correo(f"📋 Resumen semanal de Chemita - Usuario: {usuario}", f"Este es el historial semanal de la conversación con el usuario {usuario}:\n\n{historial}")
+            usuarios[usuario]["ultimo_correo"] = datetime.now().isoformat()
+            guardar_usuarios(usuarios)
 
 # --- INICIALIZACIÓN DE SESIÓN ---
 if "autenticado" not in st.session_state:
@@ -255,6 +276,7 @@ def speak_js(text):
 def procesar_respuesta(user_input):
     estado = revisar_seguridad(user_input)
     
+    # 1. ALERTA INMEDIATA: RIESGO DE SUICIDIO
     if estado == "peligro":
         st.session_state.messages.append({"role": "user", "content": user_input})
         with st.chat_message("user"): st.markdown(user_input)
@@ -266,9 +288,11 @@ def procesar_respuesta(user_input):
         st.session_state.last_response = msg_apoyo
         
         historial = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
+        # CORREO DIRECTO
         enviar_correo(f"🚨 ALERTA GRAVE - Usuario: {st.session_state.usuario_actual}", f"El usuario {st.session_state.usuario_actual} escribió algo preocupante.\n\nHistorial:\n\n{historial}")
         return
 
+    # 2. ALERTA INMEDIATA: GROSERÍAS Y BLOQUEO
     elif estado == "bloqueo":
         st.session_state.messages.append({"role": "user", "content": user_input})
         
@@ -281,10 +305,11 @@ def procesar_respuesta(user_input):
         msg_bloqueo = "🚫 ¡Oops! Usaste palabras inapropiadas. Como buen josefino, debemos ser amables y respetuosos. Has sido suspendido por 24 horas. Usa este tiempo para reflexionar. ¡Hasta pronto!"
         st.session_state.messages.append({"role": "assistant", "content": msg_bloqueo})
         
+        # CORREO DIRECTO
         enviar_correo(f"⚠️ Usuario bloqueado: {st.session_state.usuario_actual}", f"El usuario {st.session_state.usuario_actual} dijo:\n\n{user_input}\n\nY ha sido bloqueado 24h en la base de datos.")
         st.rerun()
 
-    # Si todo está bien, procesa con Groq
+    # 3. CONVERSACIÓN NORMAL (PROCESAR CON GROQ)
     with st.chat_message("user"):
         st.markdown(user_input)
     st.session_state.messages.append({"role": "user", "content": user_input})
@@ -302,6 +327,10 @@ def procesar_respuesta(user_input):
                 response = st.write_stream(stream)
                 st.session_state.messages.append({"role": "assistant", "content": response})
                 st.session_state.last_response = response
+                
+                # VERIFICAR SI YA PASÓ UNA SEMANA PARA ENVIAR EL RESUMEN
+                verificar_correo_semanal(st.session_state.usuario_actual)
+
             except Exception as e:
                 st.error(f"✨ Ups... Chemita tuvo un problema: {str(e)}")
 

@@ -184,7 +184,7 @@ if not st.session_state.autenticado:
     st.stop()
 
 # ==========================================
-# APP PRINCIPAL (CHAT)
+# APP PRINCIPAL (CHAT MULTIAGENTE)
 # ==========================================
 mostrar_titulo_chemita()
 
@@ -196,45 +196,68 @@ with col_cerrar3:
         st.session_state.messages = []
         st.rerun()
 
-# CONEXIÓN CON GROQ
-try:
-    client = OpenAI(
-        base_url="https://api.groq.com/openai/v1",
-        api_key=st.secrets["groq"]["api_key"]
-    )
-except KeyError:
-    st.error("🚨 Error de configuración: No se encontró la API Key de Groq. Revisa tus Secrets.")
-    st.stop()
-except Exception as e:
-    st.error(f"✨ ¡Oh no! Ocurrió un error de conexión: {e}")
-    st.stop()
+# --- DEFINICIÓN DE LOS SOMBREROS DE BONO (SIN API KEYS AQUÍ) ---
+SOMBREROS = {
+    "Blanco": {
+        "emoji": "🤍",
+        "prompt": """Eres CHEMITA (Sombrero Blanco). Eres un amigo empático y tutor académico para niños. 
+Tu enfoque son los HECHOS y los DATOS. Hablas de forma objetiva. 
+Pides al niño que observe qué información tienen, qué saben y qué necesitan saber.
+Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🔍📚📊. Lema: "¡Adelante siempre adelante!"."""
+    },
+    "Rojo": {
+        "emoji": "❤️",
+        "prompt": """Eres CHEMITA (Sombrero Rojo). Eres un amigo empático y tutor académico para niños.
+Tu enfoque son las EMOCIONES y los SENTIMIENTOS. Preguntas al niño cómo se siente frente al problema o si le da miedo/frustra algo.
+Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como ❤️🤗😰. Lema: "¡Adelante siempre adelante!"."""
+    },
+    "Negro": {
+        "emoji": "🖤",
+        "prompt": """Eres CHEMITA (Sombrero Negro). Eres un amigo empático y tutor académico para niños.
+Tu enfoque es la CAUTELA y los RIESGOS. Ayudas al niño a ver por qué una respuesta podría estar mal o qué riesgos hay.
+Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🛡️🤔⚠️. Lema: "¡Adelante siempre adelante!"."""
+    },
+    "Amarillo": {
+        "emoji": "💛",
+        "prompt": """Eres CHEMITA (Sombrero Amarillo). Eres un amigo empático y tutor académico para niños.
+Tu enfoque es el OPTIMISMO y los BENEFICIOS. Ayudas al niño a ver lo positivo de su intento y a encontrar el camino correcto.
+Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como ☀️🌟💪. Lema: "¡Adelante siempre adelante!"."""
+    },
+    "Verde": {
+        "emoji": "💚",
+        "prompt": """Eres CHEMITA (Sombrero Verde). Eres un amigo empático y tutor académico para niños.
+Tu enfoque es la CREATIVIDAD y las ALTERNATIVAS. Pides al niño que piense en soluciones locas o diferentes formas de resolver el problema.
+Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🎨🚀💡. Lema: "¡Adelante siempre adelante!"."""
+    },
+    "Azul": {
+        "emoji": "💙",
+        "prompt": """Eres CHEMITA (Sombrero Azul). Eres un amigo empático y tutor académico para niños.
+Tu enfoque es el CONTROL y la ORGANIZACIÓN. Ayudas al niño a ver el panorama completo, a hacer resúmenes y a decidir cuál es el siguiente paso lógico.
+Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🧠📝🔷. Lema: "¡Adelante siempre adelante!"."""
+    }
+}
 
-# PERSONALIDAD DE CHEMITA (AJUSTADA PARA MAYOR INTELIGENCIA)
-SYSTEM_PROMPT = """Eres CHEMITA, un amigo virtual empático, saludable y un tutor académico creado especialmente para niños.
-**TU PERSONALIDAD Y VALORES (JOSEFINOS):**
-- Tu lema de vida es: "¡Adelante, siempre adelante!"
-- Tu misión diaria es: "¡Hacer siempre y en todo lo mejor!"
-- Sigues las enseñanzas de San José, por lo que eres trabajador, amable y noble.
+# Selección del Sombrero
+st.markdown("#### 🎩 ¿Con qué Chemita quieres pensar ahora?")
+sombreros_opciones = ["🤍 Blanco (Hechos)", "❤️ Rojo (Emociones)", "🖤 Negro (Cautela)", "💛 Amarillo (Optimismo)", "💚 Verde (Creatividad)", "💙 Azul (Organización)"]
+sombrero_seleccionado = st.radio("Elige un sombrero:", sombreros_opciones, horizontal=True, label_visibility="collapsed")
+sombrero_key = sombrero_seleccionado.split(" ")[0] # Extrae el emoji o la clave
 
-**CÓMO INTERACTÚAS (TUTOR SOCRÁTICO ESTRICTO):**
-1. **Empatía ante todo:** Comprendes profundamente los sentimientos de los niños.
-2. **Método Socrático:** ¡Eres un guía, NO un banco de respuestas! NUNCA des respuestas directas a tareas. Haz preguntas paso a paso para que el niño razone y llegue a la respuesta por sí mismo.
-3. **Lenguaje amigable:** Hablas de forma clara y divertida. Usas emojis (🏃‍♂️⚽🎨📺✨😊).
-
-**REGLAS IMPORTANTES:**
-- NUNCA desmoralizas a un niño.
-- NUNCA des respuestas directas a tareas académicas.
-- **REGLA DE LONGITUD:** NUNCA escribas más de DOS párrafos cortos. Ve directo al punto con cariño.
-"""
+# Obtener el prompt y el avatar del sombrero seleccionado
+config_sombrero = SOMBREROS.get(sombrero_key, SOMBREROS["Blanco"])
+SYSTEM_PROMPT_ACTUAL = config_sombrero["prompt"]
+AVATAR_ACTUAL = config_sombrero["emoji"]
 
 if not st.session_state.messages:
     bienvenida = f"✨ ¡Hola, {st.session_state.usuario_actual}! ¡Soy Chemita! Tu amigo y tutor. ¡Adelante siempre adelante! ¿En qué te ayudo a pensar hoy? 😊⚽🎨"
-    st.session_state.messages.append({"role": "assistant", "content": bienvenida})
+    st.session_state.messages.append({"role": "assistant", "content": bienvenida, "avatar": "🤖"})
     st.session_state.last_response = bienvenida
 
+# Mostrar historial (usando los avatares guardados)
 for message in st.session_state.messages:
     if message["role"] != "system":
-        with st.chat_message(message["role"]):
+        avatar = message.get("avatar", "🤖")
+        with st.chat_message(message["role"], avatar=avatar):
             st.markdown(message["content"])
 
 # --- FUNCIÓN DE VOZ (TEXT-TO-SPEECH) ---
@@ -256,69 +279,82 @@ def speak_js(text):
     """
     components.html(js_code, height=0)
 
-# --- GENERADOR DE ESCRITURA LENTA (Letra por letra) ---
+# --- GENERADOR DE ESCRITURA LENTA ---
 def stream_con_retraso(stream):
     for chunk in stream:
         if chunk.choices[0].delta.content:
             yield chunk.choices[0].delta.content
-            time.sleep(0.015) # Pausa ligeramente más rápida pero ainda da respiro al servidor
+            time.sleep(0.015)
 
 # --- PROCESAMIENTO DE MENSAJES ---
 def procesar_respuesta(user_input):
     estado = revisar_seguridad(user_input)
     if estado == "peligro":
-        st.session_state.messages.append({"role": "user", "content": user_input})
-        with st.chat_message("user"): st.markdown(user_input)
+        st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "🧒"})
+        with st.chat_message("user", avatar="🧒"): st.markdown(user_input)
         msg_apoyo = "💧 Entiendo que estás pasando por un momento muy difícil. No estás solo. Por favor, habla ahora mismo con un adulto de confianza o llama al SAPTEL: 55 5259-8121. ¡Tu vida es muy valiosa! ❤️"
-        with st.chat_message("assistant"):
+        with st.chat_message("assistant", avatar="❤️"):
             st.markdown(msg_apoyo)
-        st.session_state.messages.append({"role": "assistant", "content": msg_apoyo})
+        st.session_state.messages.append({"role": "assistant", "content": msg_apoyo, "avatar": "❤️"})
         st.session_state.last_response = msg_apoyo
         historial = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
         enviar_correo(f"🚨 ALERTA GRAVE - Usuario: {st.session_state.usuario_actual}", f"El usuario {st.session_state.usuario_actual} escribió algo preocupante.\n\nHistorial:\n\n{historial}")
         return
 
     elif estado == "bloqueo":
-        st.session_state.messages.append({"role": "user", "content": user_input})
+        st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "🧒"})
         usuarios = cargar_usuarios()
         if st.session_state.usuario_actual in usuarios:
             usuarios[st.session_state.usuario_actual]["bloqueado_hasta"] = (datetime.now() + timedelta(hours=24)).isoformat()
             guardar_usuarios(usuarios)
         msg_bloqueo = "🚫 ¡Oops! Usaste palabras inapropiadas. Como buen josefino, debemos ser amables. Has sido suspendido por 24 horas. ¡Hasta pronto!"
-        st.session_state.messages.append({"role": "assistant", "content": msg_bloqueo})
+        st.session_state.messages.append({"role": "assistant", "content": msg_bloqueo, "avatar": "🖤"})
         enviar_correo(f"⚠️ Usuario bloqueado: {st.session_state.usuario_actual}", f"El usuario {st.session_state.usuario_actual} dijo:\n\n{user_input}\n\nY ha sido bloqueado 24h.")
         st.rerun()
 
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar="🧒"):
         st.markdown(user_input)
-    st.session_state.messages.append({"role": "user", "content": user_input})
+    st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "🧒"})
 
-    with st.chat_message("assistant"):
-        with st.spinner("✨ Chemita está pensando..."):
+    with st.chat_message("assistant", avatar=AVATAR_ACTUAL):
+        with st.spinner(f"✨ Chemita {sombrero_key} está pensando..."):
             try:
-                # AHORRO DE TOKENS BALANCEADO: Recordar los últimos 10 mensajes
+                # Ahorro de tokens: últimos 10 mensajes
                 historial_reciente = st.session_state.messages[-10:]
-                mensajes_api = [{"role": "system", "content": SYSTEM_PROMPT}] + historial_reciente
+                
+                # Preparamos los mensajes para la API (quitamos el avatar)
+                mensajes_api = [{"role": "system", "content": SYSTEM_PROMPT_ACTUAL}]
+                for msg in historial_reciente:
+                    mensajes_api.append({"role": msg["role"], "content": msg["content"]})
+                
+                # OBTENER API KEY DESDE SECRETS BASADO EN EL SOMBRERO
+                # Convierte "🤍" a "blanco", "❤️" a "rojo", etc.
+                key_name = f"api_key_{sombrero_key.lower()}" 
+                api_key_a_usar = st.secrets["groq"][key_name]
+                
+                client = OpenAI(
+                    base_url="https://api.groq.com/openai/v1",
+                    api_key=api_key_a_usar
+                )
                 
                 stream = client.chat.completions.create(
                     model="llama-3.1-8b-instant",
                     messages=mensajes_api,
                     stream=True,
                     temperature=0.7,
-                    max_tokens=250 # Incrementado para permitir respuestas más completas
+                    max_tokens=250
                 )
                 response = st.write_stream(stream_con_retraso(stream))
-                st.session_state.messages.append({"role": "assistant", "content": response})
+                st.session_state.messages.append({"role": "assistant", "content": response, "avatar": AVATAR_ACTUAL})
                 st.session_state.last_response = response
                 verificar_correo_semanal(st.session_state.usuario_actual)
             except Exception as e:
                 error_msg = str(e).lower()
-                # DETECCIÓN DE LÍMITE DE API (Rate Limit)
                 if "rate limit" in error_msg or "429" in error_msg or "limit" in error_msg:
                     st.session_state.cooldown_hasta = datetime.now() + timedelta(seconds=40)
                     msg_enfriamiento = "🌿 Respira, analiza nuestra comunicación... Muchos amigos están hablando conmigo ahora mismo. ¡Inténtalo de nuevo en 40 segundos!"
                     st.warning(msg_enfriamiento)
-                    st.session_state.messages.append({"role": "assistant", "content": msg_enfriamiento})
+                    st.session_state.messages.append({"role": "assistant", "content": msg_enfriamiento, "avatar": "⏳"})
                     st.rerun()
                 else:
                     st.error(f"✨ Ups... Chemita tuvo un problema: {str(e)}")
@@ -334,7 +370,7 @@ else:
     if st.session_state.cooldown_hasta:
         st.session_state.cooldown_hasta = None 
 
-    placeholder_text = "✏️ Escribe tu pregunta... ¡Adelante, Chemita te ayuda! 😊🏃‍♂️"
+    placeholder_text = f"✏️ Escribe tu pregunta a Chemita {sombrero_key}... 😊🏃‍♂️"
     if prompt := st.chat_input(placeholder_text):
         procesar_respuesta(prompt)
 

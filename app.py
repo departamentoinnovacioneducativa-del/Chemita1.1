@@ -116,11 +116,9 @@ def enviar_correo(asunto, mensaje):
 
 def revisar_seguridad(texto):
     texto_lower = texto.lower()
-    # Lista ampliada de riesgo
     palabras_peligro = ["suicid", "matarme", "hacerme daño", "hacerme dano", "no quiero vivir", "acabar con todo", "cortarme", "ahogarme", "saltar desde", "morir", "estrangular", "envenenar", "pegarme un tiro", "colgarme"]
     if any(palabra in texto_lower for palabra in palabras_peligro):
         return "peligro"
-    # Lista ampliada de groserías
     groserias = ["pendejo", "estupido", "estúpido", "idiota", "imbecil", "imbécil", "maldito", "puto", "puta", "mierda", "joder", "cabron", "cabrón", "marica", "verga", "coño", "chinga", "culero", "zorra", "pendeja", "putos", "putas"]
     if any(groseria in texto_lower for groseria in groserias):
         return "bloqueo"
@@ -154,7 +152,7 @@ if "last_response" not in st.session_state:
     st.session_state.last_response = ""
 if "cooldown_hasta" not in st.session_state:
     st.session_state.cooldown_hasta = None
-if "ban_hasta" not in st.session_state: # Nuevo: Bloqueo en sesión por groserías
+if "ban_hasta" not in st.session_state:
     st.session_state.ban_hasta = None
 if "quemas_activos" not in st.session_state:
     st.session_state.quemas_activos = ["Hechos 🤍"]
@@ -206,7 +204,6 @@ if not st.session_state.autenticado:
 # ==========================================
 mostrar_titulo_chemita()
 
-# Comprobar si el usuario fue baneado en esta sesión
 if st.session_state.ban_hasta and datetime.now() < st.session_state.ban_hasta:
     tiempo_restante = st.session_state.ban_hasta - datetime.now()
     horas = int(tiempo_restante.total_seconds() // 3600)
@@ -214,7 +211,7 @@ if st.session_state.ban_hasta and datetime.now() < st.session_state.ban_hasta:
     st.error(f"🚫 ¡Oops! Estás suspendido por usar palabras inapropiadas. Vuelve en {horas}h y {minutos}m. ¡Reflexiona!")
     st.stop()
 elif st.session_state.ban_hasta:
-    st.session_state.ban_hasta = None # Se acabó el tiempo
+    st.session_state.ban_hasta = None
 
 col_cerrar1, col_cerrar2, col_cerrar3 = st.columns([2, 1, 1])
 with col_cerrar3:
@@ -313,7 +310,6 @@ if not st.session_state.messages:
     st.session_state.messages.append({"role": "assistant", "content": bienvenida, "avatar": "🤖"})
     st.session_state.last_response = bienvenida
 
-# Mostrar historial
 for message in st.session_state.messages:
     if message["role"] != "system":
         avatar = message.get("avatar", "🤖")
@@ -344,7 +340,7 @@ def stream_con_retraso(stream):
     for chunk in stream:
         if chunk.choices[0].delta.content:
             yield chunk.choices[0].delta.content
-            time.sleep(0.04) # Velocidad reducida para que escriba más despacio
+            time.sleep(0.06) # Retraso ajustado a 0.06 segundos
 
 # --- PROCESAMIENTO DE MENSAJES ---
 def procesar_respuesta(user_input):
@@ -368,7 +364,6 @@ def procesar_respuesta(user_input):
             usuarios[st.session_state.usuario_actual]["bloqueado_hasta"] = (datetime.now() + timedelta(hours=24)).isoformat()
             guardar_usuarios(usuarios)
         
-        # Bloqueo inmediato en sesión
         st.session_state.ban_hasta = datetime.now() + timedelta(hours=24)
         
         msg_bloqueo = "🚫 ¡Oops! Usaste palabras inapropiadas. Como buen josefino, debemos ser amables. Has sido suspendido por 24 horas. ¡Hasta pronto!"
@@ -380,10 +375,8 @@ def procesar_respuesta(user_input):
         st.markdown(user_input)
     st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "🧒"})
 
-    # Determinar si deben hablar en plural
     hablar_en_plural = len(quemas_activos) > 1
 
-    # Bucle para que cada Chema seleccionado responda
     for agente_key in quemas_activos:
         config = SOMBREROS[agente_key]
         avatar_emoji = agente_key.split(" ")[1] 
@@ -394,21 +387,18 @@ def procesar_respuesta(user_input):
                 try:
                     historial_reciente = st.session_state.messages[-10:]
                     
-                    # Ajustar el prompt para plural si es necesario
                     system_prompt = config["prompt"]
                     if hablar_en_plural:
                         system_prompt += "\n\nNOTA IMPORTANTE: Estás colaborando en un equipo de Chemas. Dirígete al niño hablando en PLURAL (ej: 'Nosotros pensamos', 'El equipo sugiere')."
                     
                     mensajes_api = [{"role": "system", "content": system_prompt}]
                     
-                    # LÓGICA DE ROLES DINÁMICA
                     for msg in historial_reciente:
                         if msg["role"] == "assistant" and msg.get("avatar") != avatar_emoji:
                             mensajes_api.append({"role": "user", "content": f"(Otro Chema dijo: {msg['content']})"})
                         else:
                             mensajes_api.append({"role": msg["role"], "content": msg["content"]})
                     
-                    # Unir mensajes consecutivos del mismo rol
                     merged_mensajes = [mensajes_api[0]]
                     for m in mensajes_api[1:]:
                         if m["role"] == "user" and merged_mensajes[-1]["role"] == "user":
@@ -416,7 +406,6 @@ def procesar_respuesta(user_input):
                         else:
                             merged_mensajes.append(m)
                             
-                    # Forzar respuesta
                     if merged_mensajes[-1]["role"] == "assistant":
                         merged_mensajes.append({"role": "user", "content": f"Ahora te toca a ti, Chema {nombre_agente}. ¡Dime qué opinas!"})
                     

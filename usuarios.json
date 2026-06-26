@@ -1,6 +1,6 @@
 {
-  "admin": {
-    "password": "tu_clave_secreta_aqui",
+  "mago": {
+    "password": "198805",
     "bloqueado_hasta": null,
     "ultimo_correo": null
   },

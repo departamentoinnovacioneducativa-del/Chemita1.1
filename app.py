@@ -16,7 +16,7 @@ st.set_page_config(
     menu_items={'Get Help': None, 'Report a bug': None, 'About': None}
 )
 
-# CSS BASE
+# CSS BASE Y MEJORAS VISUALES
 css_base = """
 <style>
     #MainMenu {visibility: hidden;}
@@ -29,15 +29,16 @@ css_base = """
 
     .stApp {
         max-width: 100%; padding: 0; background-color: #001F3F !important; 
-        transition: background-color 0.5s ease; /* Transición suave de color */
+        transition: background-color 0.5s ease;
     }
     .stApp > div {
         border: 8px solid #2ECC71 !important; border-radius: 15px;
         overflow: hidden; box-sizing: border-box; 
-        transition: border-color 0.5s ease; /* Transición suave de borde */
+        transition: border-color 0.5s ease;
     }
     [data-testid="stBlock"] { padding: 15px; }
     
+    /* Banner Principal */
     div[data-testid="stImageContainer"] { margin: 0 0 15px 0 !important; padding: 0 !important; }
     div[data-testid="stImageContainer"] img {
         width: 100% !important; height: auto !important; max-height: 250px; 
@@ -75,15 +76,16 @@ css_base = """
         background-color: #FFFDE0; padding: 30px; border-radius: 15px; margin-top: 20px;
     }
     
-    /* Hacer circulares las imágenes de los botones */
+    /* Botones Circulares de los Chemas */
     div[data-testid="stHorizontalBlock"] > div > div > div[data-testid="stImageContainer"] img {
         border-radius: 50% !important;
-        max-height: 80px !important;
-        width: 80px !important;
+        max-height: 90px !important;
+        width: 90px !important;
         object-fit: cover !important;
-        margin: 0 auto !important;
+        margin: 0 auto 5px auto !important;
         display: block !important;
         border: 3px solid #FFE484 !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
 </style>
 """
@@ -302,7 +304,7 @@ AVATAR_ACTUAL = config_sombrero["emoji"]
 COLORES_SOMBRERO = {
     "Hechos": {"bg": "#F0F2F6", "border": "#B0BEC5", "title": "#37474F"},
     "Emociones": {"bg": "#FFEBEE", "border": "#E53935", "title": "#C62828"},
-    "Cautela": {"bg": "#263238", "border": "#000000", "title": "#ECEFF1"},
+    "Cautela": {"bg": "#ECEFF1", "border": "#455A64", "title": "#263238"},
     "Optimismo": {"bg": "#FFFDE7", "border": "#FBC02D", "title": "#F57F17"},
     "Creativo": {"bg": "#E8F5E9", "border": "#43A047", "title": "#2E7D32"},
     "Organizador": {"bg": "#E3F2FD", "border": "#1E88E5", "title": "#1565C0"},
@@ -326,6 +328,10 @@ css_dinamico = f"""
     }}
     [data-testid="stChatInputSubmit"] {{
         color: {color_cfg['border']} !important;
+    }}
+    /* Actualizar también el borde de las imágenes de los botones */
+    div[data-testid="stHorizontalBlock"] > div > div > div[data-testid="stImageContainer"] img {{
+        border-color: {color_cfg['border']} !important;
     }}
 </style>
 """

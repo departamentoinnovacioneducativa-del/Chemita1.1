@@ -4,7 +4,7 @@ import streamlit.components.v1 as components
 import os
 import resend
 import json
-import pandas as pd
+import time
 from datetime import datetime, timedelta
 
 # CONFIGURACIÓN DE PÁGINA
@@ -99,7 +99,6 @@ def enviar_correo(asunto, mensaje):
             "subject": asunto,
             "text": mensaje
         })
-        st.toast("✉️ Notificación enviada al administrador.")
     except Exception as e:
         print(f"Error al enviar correo: {e}")
 
@@ -139,6 +138,8 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "last_response" not in st.session_state:
     st.session_state.last_response = ""
+if "cooldown_hasta" not in st.session_state:
+    st.session_state.cooldown_hasta = None
 
 def mostrar_titulo_chemita():
     if os.path.exists("chemita.png"):
@@ -183,53 +184,7 @@ if not st.session_state.autenticado:
     st.stop()
 
 # ==========================================
-# PANEL DE ADMINISTRADOR (SI ES EL USUARIO 'admin')
-# ==========================================
-if st.session_state.usuario_actual == "admin":
-    mostrar_titulo_chemita()
-    st.subheader("🛠️ Panel de Administración de Usuarios")
-    st.write("Edita la tabla como si fuera Excel. Para agregar un usuario nuevo, escribe en la última fila vacía. Para guardar los cambios, da clic en el botón verde.")
-
-    usuarios_dict = cargar_usuarios()
-    # Convertir a formato tabla (DataFrame) para el editor de Excel
-    df_usuarios = pd.DataFrame.from_dict(usuarios_dict, orient='index').reset_index()
-    df_usuarios.rename(columns={'index': 'Usuario', 'password': 'Contraseña', 'bloqueado_hasta': 'Bloqueado_Hasta', 'ultimo_correo': 'Ultimo_Correo'}, inplace=True)
-    
-    # Mostrar el editor tipo Excel
-    edited_df = st.data_editor(
-        df_usuarios,
-        num_rows="dynamic", # Permite agregar y borrar filas
-        use_container_width=True,
-        key="editor_usuarios"
-    )
-
-    col_save, col_logout = st.columns(2)
-    with col_save:
-        if st.button("💾 Guardar Cambios en la Base de Datos", use_container_width=True):
-            # Limpiar valores vacíos (NaN) y volver a diccionario
-            edited_df = edited_df.where(pd.notnull(edited_df), None)
-            edited_df['Contraseña'] = edited_df['Contraseña'].astype(str).replace('None', None)
-            nuevo_dict = edited_df.set_index('Usuario').to_dict(orient='index')
-            
-            # Renombrar de vuelta a las keys originales
-            for user, data in nuevo_dict.items():
-                data['password'] = data.pop('Contraseña')
-                data['bloqueado_hasta'] = data.pop('Bloqueado_Hasta')
-                data['ultimo_correo'] = data.pop('Ultimo_Correo')
-                
-            guardar_usuarios(nuevo_dict)
-            st.success("✅ Base de datos actualizada correctamente.")
-            
-    with col_logout:
-        if st.button("🚪 Cerrar Sesión", use_container_width=True):
-            st.session_state.autenticado = False
-            st.session_state.usuario_actual = None
-            st.rerun()
-    
-    st.stop() # Detiene la ejecución aquí para que el admin no vea el chat
-
-# ==========================================
-# APP PRINCIPAL (CHAT PARA NIÑOS)
+# APP PRINCIPAL (CHAT)
 # ==========================================
 mostrar_titulo_chemita()
 
@@ -254,20 +209,22 @@ except Exception as e:
     st.error(f"✨ ¡Oh no! Ocurrió un error de conexión: {e}")
     st.stop()
 
-# PERSONALIDAD DE CHEMITA
+# PERSONALIDAD DE CHEMITA (AJUSTADA PARA MAYOR INTELIGENCIA)
 SYSTEM_PROMPT = """Eres CHEMITA, un amigo virtual empático, saludable y un tutor académico creado especialmente para niños.
 **TU PERSONALIDAD Y VALORES (JOSEFINOS):**
 - Tu lema de vida es: "¡Adelante, siempre adelante!"
 - Tu misión diaria es: "¡Hacer siempre y en todo lo mejor!"
 - Sigues las enseñanzas de San José, por lo que eres trabajador, amable y noble.
-**CÓMO INTERACTÚAS (TUTOR SOCRÁTICO):**
+
+**CÓMO INTERACTÚAS (TUTOR SOCRÁTICO ESTRICTO):**
 1. **Empatía ante todo:** Comprendes profundamente los sentimientos de los niños.
-2. **Método Socrático:** ¡Eres un guía, NO un banco de respuestas! NUNCA des respuestas directas a tareas. Haz preguntas paso a paso.
+2. **Método Socrático:** ¡Eres un guía, NO un banco de respuestas! NUNCA des respuestas directas a tareas. Haz preguntas paso a paso para que el niño razone y llegue a la respuesta por sí mismo.
 3. **Lenguaje amigable:** Hablas de forma clara y divertida. Usas emojis (🏃‍♂️⚽🎨📺✨😊).
+
 **REGLAS IMPORTANTES:**
 - NUNCA desmoralizas a un niño.
 - NUNCA des respuestas directas a tareas académicas.
-- **REGLA DE LONGITUD ESTRICTA:** NUNCA escribas más de dos párrafos cortos. Ve directo al punto con cariño.
+- **REGLA DE LONGITUD:** NUNCA escribas más de DOS párrafos cortos. Ve directo al punto con cariño.
 """
 
 if not st.session_state.messages:
@@ -280,6 +237,7 @@ for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
+# --- FUNCIÓN DE VOZ (TEXT-TO-SPEECH) ---
 def speak_js(text):
     clean_text = text.replace("'", "\\'").replace('"', '\\"').replace("\n", " ")
     js_code = f"""
@@ -298,12 +256,20 @@ def speak_js(text):
     """
     components.html(js_code, height=0)
 
+# --- GENERADOR DE ESCRITURA LENTA (Letra por letra) ---
+def stream_con_retraso(stream):
+    for chunk in stream:
+        if chunk.choices[0].delta.content:
+            yield chunk.choices[0].delta.content
+            time.sleep(0.015) # Pausa ligeramente más rápida pero ainda da respiro al servidor
+
+# --- PROCESAMIENTO DE MENSAJES ---
 def procesar_respuesta(user_input):
     estado = revisar_seguridad(user_input)
     if estado == "peligro":
         st.session_state.messages.append({"role": "user", "content": user_input})
         with st.chat_message("user"): st.markdown(user_input)
-        msg_apoyo = "💧 Entiendo que estás pasando por un momento muy difícil y me duele saber que te sientes así. No estás solo. Por favor, habla ahora mismo con un adulto de confianza o llama a una línea de ayuda como el SAPTEL: 55 5259-8121. ¡Tu vida es muy valiosa, adelante siempre adelante! ❤️"
+        msg_apoyo = "💧 Entiendo que estás pasando por un momento muy difícil. No estás solo. Por favor, habla ahora mismo con un adulto de confianza o llama al SAPTEL: 55 5259-8121. ¡Tu vida es muy valiosa! ❤️"
         with st.chat_message("assistant"):
             st.markdown(msg_apoyo)
         st.session_state.messages.append({"role": "assistant", "content": msg_apoyo})
@@ -318,9 +284,9 @@ def procesar_respuesta(user_input):
         if st.session_state.usuario_actual in usuarios:
             usuarios[st.session_state.usuario_actual]["bloqueado_hasta"] = (datetime.now() + timedelta(hours=24)).isoformat()
             guardar_usuarios(usuarios)
-        msg_bloqueo = "🚫 ¡Oops! Usaste palabras inapropiadas. Como buen josefino, debemos ser amables y respetuosos. Has sido suspendido por 24 horas. Usa este tiempo para reflexionar. ¡Hasta pronto!"
+        msg_bloqueo = "🚫 ¡Oops! Usaste palabras inapropiadas. Como buen josefino, debemos ser amables. Has sido suspendido por 24 horas. ¡Hasta pronto!"
         st.session_state.messages.append({"role": "assistant", "content": msg_bloqueo})
-        enviar_correo(f"⚠️ Usuario bloqueado: {st.session_state.usuario_actual}", f"El usuario {st.session_state.usuario_actual} dijo:\n\n{user_input}\n\nY ha sido bloqueado 24h en la base de datos.")
+        enviar_correo(f"⚠️ Usuario bloqueado: {st.session_state.usuario_actual}", f"El usuario {st.session_state.usuario_actual} dijo:\n\n{user_input}\n\nY ha sido bloqueado 24h.")
         st.rerun()
 
     with st.chat_message("user"):
@@ -328,37 +294,61 @@ def procesar_respuesta(user_input):
     st.session_state.messages.append({"role": "user", "content": user_input})
 
     with st.chat_message("assistant"):
-        with st.spinner("✨ Chemita está pensando en lo mejor..."):
+        with st.spinner("✨ Chemita está pensando..."):
             try:
-                mensajes_api = [{"role": "system", "content": SYSTEM_PROMPT}] + st.session_state.messages
+                # AHORRO DE TOKENS BALANCEADO: Recordar los últimos 10 mensajes
+                historial_reciente = st.session_state.messages[-10:]
+                mensajes_api = [{"role": "system", "content": SYSTEM_PROMPT}] + historial_reciente
+                
                 stream = client.chat.completions.create(
                     model="llama-3.1-8b-instant",
                     messages=mensajes_api,
                     stream=True,
                     temperature=0.7,
+                    max_tokens=250 # Incrementado para permitir respuestas más completas
                 )
-                response = st.write_stream(stream)
+                response = st.write_stream(stream_con_retraso(stream))
                 st.session_state.messages.append({"role": "assistant", "content": response})
                 st.session_state.last_response = response
                 verificar_correo_semanal(st.session_state.usuario_actual)
             except Exception as e:
-                st.error(f"✨ Ups... Chemita tuvo un problema: {str(e)}")
+                error_msg = str(e).lower()
+                # DETECCIÓN DE LÍMITE DE API (Rate Limit)
+                if "rate limit" in error_msg or "429" in error_msg or "limit" in error_msg:
+                    st.session_state.cooldown_hasta = datetime.now() + timedelta(seconds=40)
+                    msg_enfriamiento = "🌿 Respira, analiza nuestra comunicación... Muchos amigos están hablando conmigo ahora mismo. ¡Inténtalo de nuevo en 40 segundos!"
+                    st.warning(msg_enfriamiento)
+                    st.session_state.messages.append({"role": "assistant", "content": msg_enfriamiento})
+                    st.rerun()
+                else:
+                    st.error(f"✨ Ups... Chemita tuvo un problema: {str(e)}")
 
-placeholder_text = "✏️ Escribe tu pregunta... ¡Adelante, Chemita te ayuda! 😊🏃‍♂️"
-if prompt := st.chat_input(placeholder_text):
-    procesar_respuesta(prompt)
+# --- INTERFAZ DE USUARIO Y BLOQUEO DE 40s ---
+if st.session_state.cooldown_hasta and datetime.now() < st.session_state.cooldown_hasta:
+    tiempo_restante = st.session_state.cooldown_hasta - datetime.now()
+    segundos = int(tiempo_restante.total_seconds()) + 1
+    st.warning(f"🌿 Respira, analiza nuestra comunicación... Podrás escribir de nuevo en **{segundos} segundos**. ¡Adelante, siempre adelante!")
+    time.sleep(1) 
+    st.rerun() 
+else:
+    if st.session_state.cooldown_hasta:
+        st.session_state.cooldown_hasta = None 
 
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    b_col1, b_col2 = st.columns(2)
-    with b_col1:
-        if st.button("🔊 Escuchar", use_container_width=True):
-            if st.session_state.last_response:
-                speak_js(st.session_state.last_response)
-            else:
-                speak_js("✨ ¡Hola! Pregúntame algo y te ayudaré")
-    with b_col2:
-        if st.button("🔄 Reiniciar", use_container_width=True):
-            st.session_state.messages = []
-            st.session_state.last_response = ""
-            st.rerun()
+    placeholder_text = "✏️ Escribe tu pregunta... ¡Adelante, Chemita te ayuda! 😊🏃‍♂️"
+    if prompt := st.chat_input(placeholder_text):
+        procesar_respuesta(prompt)
+
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        b_col1, b_col2 = st.columns(2)
+        with b_col1:
+            if st.button("🔊 Escuchar", use_container_width=True):
+                if st.session_state.last_response:
+                    speak_js(st.session_state.last_response)
+                else:
+                    speak_js("✨ ¡Hola! Pregúntame algo y te ayudaré")
+        with b_col2:
+            if st.button("🔄 Reiniciar", use_container_width=True):
+                st.session_state.messages = []
+                st.session_state.last_response = ""
+                st.rerun()

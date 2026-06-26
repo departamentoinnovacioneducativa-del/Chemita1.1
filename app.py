@@ -16,8 +16,8 @@ st.set_page_config(
     menu_items={'Get Help': None, 'Report a bug': None, 'About': None}
 )
 
-# CSS MEJORADO
-css_chemita = """
+# CSS BASE
+css_base = """
 <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
@@ -29,10 +29,12 @@ css_chemita = """
 
     .stApp {
         max-width: 100%; padding: 0; background-color: #001F3F !important; 
+        transition: background-color 0.5s ease; /* Transición suave de color */
     }
     .stApp > div {
         border: 8px solid #2ECC71 !important; border-radius: 15px;
         overflow: hidden; box-sizing: border-box; 
+        transition: border-color 0.5s ease; /* Transición suave de borde */
     }
     [data-testid="stBlock"] { padding: 15px; }
     
@@ -73,7 +75,7 @@ css_chemita = """
         background-color: #FFFDE0; padding: 30px; border-radius: 15px; margin-top: 20px;
     }
     
-    /* Hacer circulares las imágenes de los botones de sombreros */
+    /* Hacer circulares las imágenes de los botones */
     div[data-testid="stHorizontalBlock"] > div > div > div[data-testid="stImageContainer"] img {
         border-radius: 50% !important;
         max-height: 80px !important;
@@ -85,7 +87,7 @@ css_chemita = """
     }
 </style>
 """
-st.markdown(css_chemita, unsafe_allow_html=True)
+st.markdown(css_base, unsafe_allow_html=True)
 
 # --- GESTIÓN DE BASE DE DATOS JSON ---
 DB_FILE = "usuarios.json"
@@ -210,7 +212,7 @@ with col_cerrar3:
         st.session_state.messages = []
         st.rerun()
 
-# --- DEFINICIÓN DE LOS CHEMITAS (SOMBREROS + JOSEFINO) ---
+# --- DEFINICIÓN DE LOS CHEMITAS ---
 SOMBREROS = {
     "Hechos": {
         "emoji": "🤍",
@@ -275,7 +277,6 @@ Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas
 # --- INTERFAZ DE BOTONES CON IMÁGENES ---
 st.markdown("#### 🎩 ¿Con qué Chema quieres pensar ahora?")
 
-# Crear 7 columnas para los 7 botones
 cols = st.columns(7)
 keys_sombreros = list(SOMBREROS.keys())
 
@@ -287,16 +288,48 @@ for i, key in enumerate(keys_sombreros):
         else:
             st.warning(f"Falta {img_file}", icon="🖼️")
             
-        # El botón tendrá el nombre de la personalidad
         if st.button(key, key=f"btn_{key}", use_container_width=True):
             st.session_state.sombrero_seleccionado = key
             st.rerun()
 
-# Obtener la configuración del sombrero seleccionado actualmente
+# Obtener la configuración del sombrero seleccionado
 sombrero_key = st.session_state.sombrero_seleccionado
 config_sombrero = SOMBREROS[sombrero_key]
 SYSTEM_PROMPT_ACTUAL = config_sombrero["prompt"]
 AVATAR_ACTUAL = config_sombrero["emoji"]
+
+# --- CAMBIO DE COLOR DINÁMICO SEGÚN EL SOMBRERO ---
+COLORES_SOMBRERO = {
+    "Hechos": {"bg": "#F0F2F6", "border": "#B0BEC5", "title": "#37474F"},
+    "Emociones": {"bg": "#FFEBEE", "border": "#E53935", "title": "#C62828"},
+    "Cautela": {"bg": "#263238", "border": "#000000", "title": "#ECEFF1"},
+    "Optimismo": {"bg": "#FFFDE7", "border": "#FBC02D", "title": "#F57F17"},
+    "Creativo": {"bg": "#E8F5E9", "border": "#43A047", "title": "#2E7D32"},
+    "Organizador": {"bg": "#E3F2FD", "border": "#1E88E5", "title": "#1565C0"},
+    "Josefino": {"bg": "#F3E5F5", "border": "#8E24AA", "title": "#6A1B9A"}
+}
+color_cfg = COLORES_SOMBRERO[sombrero_key]
+
+css_dinamico = f"""
+<style>
+    .stApp {{
+        background-color: {color_cfg['bg']} !important; 
+    }}
+    .stApp > div {{
+        border-color: {color_cfg['border']} !important;
+    }}
+    .custom-title-chemita, .custom-subtitle-chemita {{
+        color: {color_cfg['title']} !important;
+    }}
+    [data-testid="stChatInput"] > div {{
+        border-color: {color_cfg['border']} !important;
+    }}
+    [data-testid="stChatInputSubmit"] {{
+        color: {color_cfg['border']} !important;
+    }}
+</style>
+"""
+st.markdown(css_dinamico, unsafe_allow_html=True)
 
 st.info(f"Actualmente hablando con: **Chema {sombrero_key}** {AVATAR_ACTUAL}")
 
@@ -305,7 +338,7 @@ if not st.session_state.messages:
     st.session_state.messages.append({"role": "assistant", "content": bienvenida, "avatar": "🤖"})
     st.session_state.last_response = bienvenida
 
-# Mostrar historial (usando los avatares guardados)
+# Mostrar historial
 for message in st.session_state.messages:
     if message["role"] != "system":
         avatar = message.get("avatar", "🤖")
@@ -376,7 +409,6 @@ def procesar_respuesta(user_input):
                 for msg in historial_reciente:
                     mensajes_api.append({"role": msg["role"], "content": msg["content"]})
                 
-                # Obtener el nombre de la API Key desde secrets
                 key_name = config_sombrero["api_key_name"]
                 api_key_a_usar = st.secrets["groq"][key_name]
                 

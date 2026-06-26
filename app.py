@@ -38,7 +38,6 @@ css_base = """
     }
     [data-testid="stBlock"] { padding: 15px; }
     
-    /* Banner Principal */
     div[data-testid="stImageContainer"] { margin: 0 0 15px 0 !important; padding: 0 !important; }
     div[data-testid="stImageContainer"] img {
         width: 100% !important; height: auto !important; max-height: 200px; 
@@ -92,8 +91,13 @@ def cargar_usuarios():
     return {}
 
 def guardar_usuarios(usuarios):
-    with open(DB_FILE, "w") as f:
-        json.dump(usuarios, f, indent=4)
+    try:
+        with open(DB_FILE, "w") as f:
+            json.dump(usuarios, f, indent=4)
+        return True
+    except Exception as e:
+        print(f"Error al guardar (solo lectura?): {e}")
+        return False
 
 # --- SISTEMA DE SEGURIDAD Y NOTIFICACIONES ---
 def enviar_correo(asunto, mensaje):
@@ -106,15 +110,18 @@ def enviar_correo(asunto, mensaje):
             "subject": asunto,
             "text": mensaje
         })
+        st.toast("✉️ Alerta enviada al administrador.")
     except Exception as e:
-        print(f"Error al enviar correo: {e}")
+        st.error(f"Error al enviar correo de alerta: {e}")
 
 def revisar_seguridad(texto):
     texto_lower = texto.lower()
-    palabras_peligro = ["suicid", "matarme", "hacerme daño", "no quiero vivir", "acabar con todo", "cortarme", "ahogarme", "saltar desde"]
+    # Lista ampliada de riesgo
+    palabras_peligro = ["suicid", "matarme", "hacerme daño", "hacerme dano", "no quiero vivir", "acabar con todo", "cortarme", "ahogarme", "saltar desde", "morir", "estrangular", "envenenar", "pegarme un tiro", "colgarme"]
     if any(palabra in texto_lower for palabra in palabras_peligro):
         return "peligro"
-    groserias = ["pendejo", "estupido", "idiota", "imbecil", "maldito", "puto", "puta", "mierda", "joder", "cabron", "marica", "verga"]
+    # Lista ampliada de groserías
+    groserias = ["pendejo", "estupido", "estúpido", "idiota", "imbecil", "imbécil", "maldito", "puto", "puta", "mierda", "joder", "cabron", "cabrón", "marica", "verga", "coño", "chinga", "culero", "zorra", "pendeja", "putos", "putas"]
     if any(groseria in texto_lower for groseria in groserias):
         return "bloqueo"
     return "ok"
@@ -147,6 +154,8 @@ if "last_response" not in st.session_state:
     st.session_state.last_response = ""
 if "cooldown_hasta" not in st.session_state:
     st.session_state.cooldown_hasta = None
+if "ban_hasta" not in st.session_state: # Nuevo: Bloqueo en sesión por groserías
+    st.session_state.ban_hasta = None
 if "quemas_activos" not in st.session_state:
     st.session_state.quemas_activos = ["Hechos 🤍"]
 
@@ -197,6 +206,16 @@ if not st.session_state.autenticado:
 # ==========================================
 mostrar_titulo_chemita()
 
+# Comprobar si el usuario fue baneado en esta sesión
+if st.session_state.ban_hasta and datetime.now() < st.session_state.ban_hasta:
+    tiempo_restante = st.session_state.ban_hasta - datetime.now()
+    horas = int(tiempo_restante.total_seconds() // 3600)
+    minutos = int((tiempo_restante.total_seconds() % 3600) // 60)
+    st.error(f"🚫 ¡Oops! Estás suspendido por usar palabras inapropiadas. Vuelve en {horas}h y {minutos}m. ¡Reflexiona!")
+    st.stop()
+elif st.session_state.ban_hasta:
+    st.session_state.ban_hasta = None # Se acabó el tiempo
+
 col_cerrar1, col_cerrar2, col_cerrar3 = st.columns([2, 1, 1])
 with col_cerrar3:
     if st.button("🚪 Salir"):
@@ -205,13 +224,13 @@ with col_cerrar3:
         st.session_state.messages = []
         st.rerun()
 
-# --- DEFINICIÓN DE LOS CHEMITAS (PERSONALIDADES REALES Y ÚTILES) ---
+# --- DEFINICIÓN DE LOS CHEMITAS ---
 SOMBREROS = {
     "Hechos 🤍": {
         "api_key_name": "api_key_blanco",
         "prompt": """Eres CHEMITA (Hechos). Eres un amigo y tutor para niños. 
 Tu superpoder es la OBJETIVIDAD y los DATOS. 
-Si un niño te hace una pregunta (de matemáticas, ciencias, historia, etc.), le das la información precisa, clara y directa. 
+Si un niño te hace una pregunta, le das la información precisa, clara y directa. 
 Le explicas cómo funcionan las cosas paso a paso, basándote en la realidad.
 Reglas: Eres amable pero directo al grano. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🔍📚📊. Lema: "¡Adelante siempre adelante!". 
 IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, TÚ DEBES dar tu respuesta basada en los hechos. Nunca envíes un mensaje vacío."""
@@ -320,12 +339,12 @@ def speak_js(text):
     """
     components.html(js_code, height=0)
 
-# --- GENERADOR DE ESCRITURA LENTA ---
+# --- GENERADOR DE ESCRITURA LENTA (MÁS DESPACIO) ---
 def stream_con_retraso(stream):
     for chunk in stream:
         if chunk.choices[0].delta.content:
             yield chunk.choices[0].delta.content
-            time.sleep(0.015)
+            time.sleep(0.04) # Velocidad reducida para que escriba más despacio
 
 # --- PROCESAMIENTO DE MENSAJES ---
 def procesar_respuesta(user_input):
@@ -348,6 +367,10 @@ def procesar_respuesta(user_input):
         if st.session_state.usuario_actual in usuarios:
             usuarios[st.session_state.usuario_actual]["bloqueado_hasta"] = (datetime.now() + timedelta(hours=24)).isoformat()
             guardar_usuarios(usuarios)
+        
+        # Bloqueo inmediato en sesión
+        st.session_state.ban_hasta = datetime.now() + timedelta(hours=24)
+        
         msg_bloqueo = "🚫 ¡Oops! Usaste palabras inapropiadas. Como buen josefino, debemos ser amables. Has sido suspendido por 24 horas. ¡Hasta pronto!"
         st.session_state.messages.append({"role": "assistant", "content": msg_bloqueo, "avatar": "🖤"})
         enviar_correo(f"⚠️ Usuario bloqueado: {st.session_state.usuario_actual}", f"El usuario {st.session_state.usuario_actual} dijo:\n\n{user_input}\n\nY ha sido bloqueado 24h.")
@@ -356,6 +379,9 @@ def procesar_respuesta(user_input):
     with st.chat_message("user", avatar="🧒"):
         st.markdown(user_input)
     st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "🧒"})
+
+    # Determinar si deben hablar en plural
+    hablar_en_plural = len(quemas_activos) > 1
 
     # Bucle para que cada Chema seleccionado responda
     for agente_key in quemas_activos:
@@ -367,17 +393,22 @@ def procesar_respuesta(user_input):
             with st.spinner(f"✨ Chema {nombre_agente} está pensando..."):
                 try:
                     historial_reciente = st.session_state.messages[-10:]
-                    mensajes_api = [{"role": "system", "content": config["prompt"]}]
                     
-                    # LÓGICA DE ROLES DINÁMICA PARA EVITAR QUE LA IA SE QUEDE CALLADA
+                    # Ajustar el prompt para plural si es necesario
+                    system_prompt = config["prompt"]
+                    if hablar_en_plural:
+                        system_prompt += "\n\nNOTA IMPORTANTE: Estás colaborando en un equipo de Chemas. Dirígete al niño hablando en PLURAL (ej: 'Nosotros pensamos', 'El equipo sugiere')."
+                    
+                    mensajes_api = [{"role": "system", "content": system_prompt}]
+                    
+                    # LÓGICA DE ROLES DINÁMICA
                     for msg in historial_reciente:
-                        # Si el mensaje es de otro Chema, lo pasamos como 'user' para no romper el formato de la API
                         if msg["role"] == "assistant" and msg.get("avatar") != avatar_emoji:
                             mensajes_api.append({"role": "user", "content": f"(Otro Chema dijo: {msg['content']})"})
                         else:
                             mensajes_api.append({"role": msg["role"], "content": msg["content"]})
                     
-                    # Unir mensajes consecutivos del mismo rol (la API de Groq da error si hay dos 'user' seguidos)
+                    # Unir mensajes consecutivos del mismo rol
                     merged_mensajes = [mensajes_api[0]]
                     for m in mensajes_api[1:]:
                         if m["role"] == "user" and merged_mensajes[-1]["role"] == "user":
@@ -385,7 +416,7 @@ def procesar_respuesta(user_input):
                         else:
                             merged_mensajes.append(m)
                             
-                    # Asegurar que el último mensaje sea 'user' para forzar la respuesta de la IA
+                    # Forzar respuesta
                     if merged_mensajes[-1]["role"] == "assistant":
                         merged_mensajes.append({"role": "user", "content": f"Ahora te toca a ti, Chema {nombre_agente}. ¡Dime qué opinas!"})
                     
@@ -406,7 +437,6 @@ def procesar_respuesta(user_input):
                     )
                     response = st.write_stream(stream_con_retraso(stream))
                     
-                    # Fallback por si la API devuelve una cadena vacía
                     if not response.strip():
                         response = f"¡Hola! Soy Chema {nombre_agente}. ¡Estoy listo para ayudarte con mi superpoder! 🌟"
                         
@@ -426,7 +456,6 @@ def procesar_respuesta(user_input):
                         st.session_state.messages.append({"role": "assistant", "content": error_text, "avatar": avatar_emoji})
                         continue 
 
-    # Verificar envío de correo quincenal al final de la ronda de respuestas
     verificar_correo_quincenal(st.session_state.usuario_actual)
 
 # --- INTERFAZ DE USUARIO Y BLOQUEO DE 40s ---

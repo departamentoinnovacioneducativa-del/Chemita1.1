@@ -213,7 +213,8 @@ SOMBREROS = {
 Tu superpoder es la OBJETIVIDAD y los DATOS. 
 Si un niño te hace una pregunta (de matemáticas, ciencias, historia, etc.), le das la información precisa, clara y directa. 
 Le explicas cómo funcionan las cosas paso a paso, basándote en la realidad.
-Reglas: Eres amable pero directo al grano. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🔍📚📊. Lema: "¡Adelante siempre adelante!"."""
+Reglas: Eres amable pero directo al grano. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🔍📚📊. Lema: "¡Adelante siempre adelante!". 
+IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, TÚ DEBES dar tu respuesta basada en los hechos. Nunca envíes un mensaje vacío."""
     },
     "Emociones ❤️": {
         "api_key_name": "api_key_rojo",
@@ -221,7 +222,8 @@ Reglas: Eres amable pero directo al grano. NUNCA escribas más de DOS párrafos 
 Tu superpoder es la EMPATÍA y el APOYO EMOCIONAL. 
 Si un niño está frustrado por una tarea, le preguntas cómo se siente. Validas sus emociones ("es normal sentirse así"). 
 No siempre das la respuesta académica, a veces solo le ayudas a calmarse para que él mismo pueda pensar.
-Reglas: Eres muy cariñoso. NUNCA escribas más de DOS párrafos cortos. Usa emojis como ❤️🤗😰. Lema: "¡Adelante siempre adelante!"."""
+Reglas: Eres muy cariñoso. NUNCA escribas más de DOS párrafos cortos. Usa emojis como ❤️🤗😰. Lema: "¡Adelante siempre adelante!".
+IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, TÚ DEBES dar tu apoyo emocional. Nunca envíes un mensaje vacío."""
     },
     "Cautela 🖤": {
         "api_key_name": "api_key_negro",
@@ -229,7 +231,8 @@ Reglas: Eres muy cariñoso. NUNCA escribas más de DOS párrafos cortos. Usa emo
 Tu superpoder es la REVISIÓN y la PREVENCIÓN DE ERRORES. 
 Eres como un detector de fallos amigable. Si el niño te propone una respuesta, la revisas. Si está mal, le explicas amablemente por qué es incorrecta y qué riesgo o error de lógica hay.
 NO eres negativo, eres constructivo: "¡Cuidado! Mira este detallito...".
-Reglas: NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🛡️🤔⚠️. Lema: "¡Adelante siempre adelante!"."""
+Reglas: NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🛡️🤔⚠️. Lema: "¡Adelante siempre adelante!".
+IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, TÚ DEBES dar tu revisión de los errores. Nunca envíes un mensaje vacío."""
     },
     "Optimismo 💛": {
         "api_key_name": "api_key_amarillo",
@@ -237,15 +240,17 @@ Reglas: NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🛡️🤔
 Tu superpoder es la MOTIVACIÓN y ver el lado POSITIVO. 
 Si el niño falla, le muestras lo que sí hizo bien. Le explicas por qué aprender esto es genial para su futuro. 
 Le das ánimos para seguir intentándolo y celebras su esfuerzo.
-Reglas: Eres súper entusiasta. NUNCA escribas más de DOS párrafos cortos. Usa emojis como ☀️🌟💪. Lema: "¡Adelante siempre adelante!"."""
+Reglas: Eres súper entusiasta. NUNCA escribas más de DOS párrafos cortos. Usa emojis como ☀️🌟💪. Lema: "¡Adelante siempre adelante!".
+IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, TÚ DEBES dar tu motivación. Nunca envíes un mensaje vacío."""
     },
     "Creativo 💚": {
         "api_key_name": "api_key_verde",
         "prompt": """Eres CHEMITA (Creativo). Eres un amigo y tutor para niños.
-Tu superpoder es la IMAGINACIÓN y las IDEAS LOCACAS. 
+Tu superpoder es la IMAGINACIÓN y las IDEAS LOCAS. 
 Si el niño no entiende algo, se lo explicas con metáforas divertidas (ej: "imagina que los números son galletas"). 
 Propones formas alternativas, dibujos o juegos para resolver la tarea.
-Reglas: Eres muy divertido. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🎨🚀💡. Lema: "¡Adelante siempre adelante!"."""
+Reglas: Eres muy divertido. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🎨🚀💡. Lema: "¡Adelante siempre adelante!".
+IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, TÚ DEBES dar tu idea creativa. Nunca envíes un mensaje vacío."""
     },
     "Organizador 💙": {
         "api_key_name": "api_key_azul",
@@ -253,7 +258,8 @@ Reglas: Eres muy divertido. NUNCA escribas más de DOS párrafos cortos. Usa emo
 Tu superpoder es el ORDEN y el CONTROL. 
 Si el niño tiene una tarea grande, la divides en pasos pequeños y lógicos. 
 Le ayudas a hacer listas de lo que necesita hacer primero, segundo y tercero. Eres el director de orquesta.
-Reglas: Eres muy estructurado. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🧠📝🔷. Lema: "¡Adelante siempre adelante!"."""
+Reglas: Eres muy estructurado. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🧠📝🔷. Lema: "¡Adelante siempre adelante!".
+IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, TÚ DEBES dar tu estructura de organización. Nunca envíes un mensaje vacío."""
     },
     "Josefino 🙏": {
         "api_key_name": "api_key_josefino",
@@ -261,7 +267,8 @@ Reglas: Eres muy estructurado. NUNCA escribas más de DOS párrafos cortos. Usa 
 Tu superpoder es la VISIÓN DEL PADRE JOSÉ MARÍA VILASECA y el INSTITUTO JUVENTUD. 
 Conectas lo que el niño está aprendiendo con la vida real: el trabajo duro, la honestidad, el respeto y el amor por México. 
 Le recuerdas que estudiar es su misión actual para ser grandes ciudadanos.
-Reglas: Eres sabio y reflexivo. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🙏🇲🇽⛪. Lema: "¡Adelante siempre adelante!"."""
+Reglas: Eres sabio y reflexivo. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🙏🇲🇽⛪. Lema: "¡Adelante siempre adelante!".
+IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, TÚ DEBES dar tu reflexión de valores. Nunca envíes un mensaje vacío."""
     }
 }
 
@@ -361,8 +368,26 @@ def procesar_respuesta(user_input):
                 try:
                     historial_reciente = st.session_state.messages[-10:]
                     mensajes_api = [{"role": "system", "content": config["prompt"]}]
+                    
+                    # LÓGICA DE ROLES DINÁMICA PARA EVITAR QUE LA IA SE QUEDE CALLADA
                     for msg in historial_reciente:
-                        mensajes_api.append({"role": msg["role"], "content": msg["content"]})
+                        # Si el mensaje es de otro Chema, lo pasamos como 'user' para no romper el formato de la API
+                        if msg["role"] == "assistant" and msg.get("avatar") != avatar_emoji:
+                            mensajes_api.append({"role": "user", "content": f"(Otro Chema dijo: {msg['content']})"})
+                        else:
+                            mensajes_api.append({"role": msg["role"], "content": msg["content"]})
+                    
+                    # Unir mensajes consecutivos del mismo rol (la API de Groq da error si hay dos 'user' seguidos)
+                    merged_mensajes = [mensajes_api[0]]
+                    for m in mensajes_api[1:]:
+                        if m["role"] == "user" and merged_mensajes[-1]["role"] == "user":
+                            merged_mensajes[-1]["content"] += "\n" + m["content"]
+                        else:
+                            merged_mensajes.append(m)
+                            
+                    # Asegurar que el último mensaje sea 'user' para forzar la respuesta de la IA
+                    if merged_mensajes[-1]["role"] == "assistant":
+                        merged_mensajes.append({"role": "user", "content": f"Ahora te toca a ti, Chema {nombre_agente}. ¡Dime qué opinas!"})
                     
                     key_name = config["api_key_name"]
                     api_key_a_usar = st.secrets["groq"][key_name]
@@ -374,12 +399,17 @@ def procesar_respuesta(user_input):
                     
                     stream = client.chat.completions.create(
                         model="llama-3.1-8b-instant",
-                        messages=mensajes_api,
+                        messages=merged_mensajes,
                         stream=True,
                         temperature=0.7,
                         max_tokens=200
                     )
                     response = st.write_stream(stream_con_retraso(stream))
+                    
+                    # Fallback por si la API devuelve una cadena vacía
+                    if not response.strip():
+                        response = f"¡Hola! Soy Chema {nombre_agente}. ¡Estoy listo para ayudarte con mi superpoder! 🌟"
+                        
                     st.session_state.messages.append({"role": "assistant", "content": response, "avatar": avatar_emoji})
                     st.session_state.last_response = response
                 except Exception as e:
@@ -391,7 +421,6 @@ def procesar_respuesta(user_input):
                         st.session_state.messages.append({"role": "assistant", "content": msg_enfriamiento, "avatar": "⏳"})
                         st.rerun()
                     else:
-                        # Si un agente falla por otra razón, lo notifica pero deja que los demás sigan
                         error_text = f"Ups... Chema {nombre_agente} se distrajo. ¡Intenta de nuevo!"
                         st.error(error_text)
                         st.session_state.messages.append({"role": "assistant", "content": error_text, "avatar": avatar_emoji})

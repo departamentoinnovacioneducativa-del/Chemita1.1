@@ -41,7 +41,7 @@ css_base = """
     /* Banner Principal */
     div[data-testid="stImageContainer"] { margin: 0 0 15px 0 !important; padding: 0 !important; }
     div[data-testid="stImageContainer"] img {
-        width: 100% !important; height: auto !important; max-height: 250px; 
+        width: 100% !important; height: auto !important; max-height: 200px; 
         object-fit: cover !important; border-radius: 10px; border: 3px solid #2ECC71; 
         box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
@@ -74,18 +74,6 @@ css_base = """
     
     .login-box {
         background-color: #FFFDE0; padding: 30px; border-radius: 15px; margin-top: 20px;
-    }
-    
-    /* Botones Circulares de los Chemas */
-    div[data-testid="stHorizontalBlock"] > div > div > div[data-testid="stImageContainer"] img {
-        border-radius: 50% !important;
-        max-height: 90px !important;
-        width: 90px !important;
-        object-fit: cover !important;
-        margin: 0 auto 5px auto !important;
-        display: block !important;
-        border: 3px solid #FFE484 !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
 </style>
 """
@@ -120,15 +108,18 @@ def enviar_correo(asunto, mensaje):
 
 def revisar_seguridad(texto):
     texto_lower = texto.lower()
+    # Detección de riesgo suicida o autolesiones
     palabras_peligro = ["suicid", "matarme", "hacerme daño", "no quiero vivir", "acabar con todo", "cortarme", "ahogarme", "saltar desde"]
     if any(palabra in texto_lower for palabra in palabras_peligro):
         return "peligro"
+    # Detección de groserías
     groserias = ["pendejo", "estupido", "idiota", "imbecil", "maldito", "puto", "puta", "mierda", "joder", "cabron", "marica", "verga"]
     if any(groseria in texto_lower for groseria in groserias):
         return "bloqueo"
     return "ok"
 
-def verificar_correo_semanal(usuario):
+def verificar_correo_quincenal(usuario):
+    """Revisa si han pasado 15 días para enviar el resumen."""
     usuarios = cargar_usuarios()
     if usuario in usuarios:
         ultimo_envio_str = usuarios[usuario].get("ultimo_correo")
@@ -137,11 +128,11 @@ def verificar_correo_semanal(usuario):
             enviar = True
         else:
             fecha_ultimo = datetime.fromisoformat(ultimo_envio_str)
-            if datetime.now() - fecha_ultimo >= timedelta(days=7):
+            if datetime.now() - fecha_ultimo >= timedelta(days=15): # CAMBIADO A 15 DÍAS
                 enviar = True
         if enviar and len(st.session_state.messages) > 2:
             historial = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
-            enviar_correo(f"📋 Resumen semanal de Chemita - Usuario: {usuario}", f"Este es el historial semanal de la conversación con el usuario {usuario}:\n\n{historial}")
+            enviar_correo(f"📋 Resumen quincenal de Chemita - Usuario: {usuario}", f"Este es el historial de los últimos 15 días con el usuario {usuario}:\n\n{historial}")
             usuarios[usuario]["ultimo_correo"] = datetime.now().isoformat()
             guardar_usuarios(usuarios)
 
@@ -156,8 +147,8 @@ if "last_response" not in st.session_state:
     st.session_state.last_response = ""
 if "cooldown_hasta" not in st.session_state:
     st.session_state.cooldown_hasta = None
-if "sombrero_seleccionado" not in st.session_state:
-    st.session_state.sombrero_seleccionado = "Hechos"
+if "quemas_activos" not in st.session_state:
+    st.session_state.quemas_activos = ["Hechos 🤍"]
 
 def mostrar_titulo_chemita():
     if os.path.exists("chemita.png"):
@@ -216,58 +207,44 @@ with col_cerrar3:
 
 # --- DEFINICIÓN DE LOS CHEMITAS ---
 SOMBREROS = {
-    "Hechos": {
-        "emoji": "🤍",
-        "imagen": "chema_hechos.png",
+    "Hechos 🤍": {
         "api_key_name": "api_key_blanco",
         "prompt": """Eres CHEMITA (Hechos). Eres un amigo empático y tutor académico para niños. 
 Tu enfoque son los HECHOS y los DATOS. Hablas de forma objetiva. 
 Pides al niño que observe qué información tienen, qué saben y qué necesitan saber.
 Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🔍📚📊. Lema: "¡Adelante siempre adelante!"."""
     },
-    "Emociones": {
-        "emoji": "❤️",
-        "imagen": "chema_emociones.png",
+    "Emociones ❤️": {
         "api_key_name": "api_key_rojo",
         "prompt": """Eres CHEMITA (Emociones). Eres un amigo empático y tutor académico para niños.
 Tu enfoque son las EMOCIONES y los SENTIMIENTOS. Preguntas al niño cómo se siente frente al problema o si le da miedo/frustra algo.
 Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como ❤️🤗😰. Lema: "¡Adelante siempre adelante!"."""
     },
-    "Cautela": {
-        "emoji": "🖤",
-        "imagen": "chema_cautela.png",
+    "Cautela 🖤": {
         "api_key_name": "api_key_negro",
         "prompt": """Eres CHEMITA (Cautela). Eres un amigo empático y tutor académico para niños.
 Tu enfoque es la CAUTELA y los RIESGOS. Ayudas al niño a ver por qué una respuesta podría estar mal o qué riesgos hay.
 Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🛡️🤔⚠️. Lema: "¡Adelante siempre adelante!"."""
     },
-    "Optimismo": {
-        "emoji": "💛",
-        "imagen": "chema_optimismo.png",
+    "Optimismo 💛": {
         "api_key_name": "api_key_amarillo",
         "prompt": """Eres CHEMITA (Optimismo). Eres un amigo empático y tutor académico para niños.
 Tu enfoque es el OPTIMISMO y los BENEFICIOS. Ayudas al niño a ver lo positivo de su intento y a encontrar el camino correcto.
 Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como ☀️🌟💪. Lema: "¡Adelante siempre adelante!"."""
     },
-    "Creativo": {
-        "emoji": "💚",
-        "imagen": "chema_creativo.png",
+    "Creativo 💚": {
         "api_key_name": "api_key_verde",
         "prompt": """Eres CHEMITA (Creativo). Eres un amigo empático y tutor académico para niños.
 Tu enfoque es la CREATIVIDAD y las ALTERNATIVAS. Pides al niño que piense en soluciones locas o diferentes formas de resolver el problema.
 Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🎨🚀💡. Lema: "¡Adelante siempre adelante!"."""
     },
-    "Organizador": {
-        "emoji": "💙",
-        "imagen": "chema_organizador.png",
+    "Organizador 💙": {
         "api_key_name": "api_key_azul",
         "prompt": """Eres CHEMITA (Organizador). Eres un amigo empático y tutor académico para niños.
 Tu enfoque es el CONTROL y la ORGANIZACIÓN. Ayudas al niño a ver el panorama completo, a hacer resúmenes y a decidir cuál es el siguiente paso lógico.
 Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🧠📝🔷. Lema: "¡Adelante siempre adelante!"."""
     },
-    "Josefino": {
-        "emoji": "🙏",
-        "imagen": "chema_josefino.png",
+    "Josefino 🙏": {
         "api_key_name": "api_key_josefino",
         "prompt": """Eres CHEMITA (Josefino). Eres un amigo empático y tutor académico para niños.
 Tu enfoque es la VISIÓN DEL PADRE JOSÉ MARÍA VILASECA y el INSTITUTO JUVENTUD DEL ESTADO DE MÉXICO. 
@@ -276,68 +253,22 @@ Reglas: NUNCA des respuestas directas, usa el método socrático. NUNCA escribas
     }
 }
 
-# --- INTERFAZ DE BOTONES CON IMÁGENES ---
-st.markdown("#### 🎩 ¿Con qué Chema quieres pensar ahora?")
+# --- MENÚ DESPLEGABLE MULTIAGENTE ---
+st.markdown("#### 🎩 ¿Con qué Chemas quieres pensar ahora? (Máximo 3)")
+quemas_activos = st.multiselect(
+    "Selecciona tus Chemas",
+    options=list(SOMBREROS.keys()),
+    default=st.session_state.quemas_activos,
+    max_selections=3,
+    label_visibility="collapsed"
+)
+st.session_state.quemas_activos = quemas_activos
 
-cols = st.columns(7)
-keys_sombreros = list(SOMBREROS.keys())
+if not quemas_activos:
+    st.warning("⚠️ Por favor, selecciona al menos un Chema para empezar a chatear.")
+    st.stop()
 
-for i, key in enumerate(keys_sombreros):
-    with cols[i]:
-        img_file = SOMBREROS[key]["imagen"]
-        if os.path.exists(img_file):
-            st.image(img_file, use_container_width=True)
-        else:
-            st.warning(f"Falta {img_file}", icon="🖼️")
-            
-        if st.button(key, key=f"btn_{key}", use_container_width=True):
-            st.session_state.sombrero_seleccionado = key
-            st.rerun()
-
-# Obtener la configuración del sombrero seleccionado
-sombrero_key = st.session_state.sombrero_seleccionado
-config_sombrero = SOMBREROS[sombrero_key]
-SYSTEM_PROMPT_ACTUAL = config_sombrero["prompt"]
-AVATAR_ACTUAL = config_sombrero["emoji"]
-
-# --- CAMBIO DE COLOR DINÁMICO SEGÚN EL SOMBRERO ---
-COLORES_SOMBRERO = {
-    "Hechos": {"bg": "#F0F2F6", "border": "#B0BEC5", "title": "#37474F"},
-    "Emociones": {"bg": "#FFEBEE", "border": "#E53935", "title": "#C62828"},
-    "Cautela": {"bg": "#ECEFF1", "border": "#455A64", "title": "#263238"},
-    "Optimismo": {"bg": "#FFFDE7", "border": "#FBC02D", "title": "#F57F17"},
-    "Creativo": {"bg": "#E8F5E9", "border": "#43A047", "title": "#2E7D32"},
-    "Organizador": {"bg": "#E3F2FD", "border": "#1E88E5", "title": "#1565C0"},
-    "Josefino": {"bg": "#F3E5F5", "border": "#8E24AA", "title": "#6A1B9A"}
-}
-color_cfg = COLORES_SOMBRERO[sombrero_key]
-
-css_dinamico = f"""
-<style>
-    .stApp {{
-        background-color: {color_cfg['bg']} !important; 
-    }}
-    .stApp > div {{
-        border-color: {color_cfg['border']} !important;
-    }}
-    .custom-title-chemita, .custom-subtitle-chemita {{
-        color: {color_cfg['title']} !important;
-    }}
-    [data-testid="stChatInput"] > div {{
-        border-color: {color_cfg['border']} !important;
-    }}
-    [data-testid="stChatInputSubmit"] {{
-        color: {color_cfg['border']} !important;
-    }}
-    /* Actualizar también el borde de las imágenes de los botones */
-    div[data-testid="stHorizontalBlock"] > div > div > div[data-testid="stImageContainer"] img {{
-        border-color: {color_cfg['border']} !important;
-    }}
-</style>
-"""
-st.markdown(css_dinamico, unsafe_allow_html=True)
-
-st.info(f"Actualmente hablando con: **Chema {sombrero_key}** {AVATAR_ACTUAL}")
+st.info(f"**Chemas activos en esta conversación:** {', '.join(quemas_activos)}")
 
 if not st.session_state.messages:
     bienvenida = f"✨ ¡Hola, {st.session_state.usuario_actual}! ¡Soy Chemita! Tu amigo y tutor. ¡Adelante siempre adelante! ¿En qué te ayudo a pensar hoy? 😊⚽🎨"
@@ -407,43 +338,52 @@ def procesar_respuesta(user_input):
         st.markdown(user_input)
     st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "🧒"})
 
-    with st.chat_message("assistant", avatar=AVATAR_ACTUAL):
-        with st.spinner(f"✨ Chema {sombrero_key} está pensando..."):
-            try:
-                historial_reciente = st.session_state.messages[-10:]
-                mensajes_api = [{"role": "system", "content": SYSTEM_PROMPT_ACTUAL}]
-                for msg in historial_reciente:
-                    mensajes_api.append({"role": msg["role"], "content": msg["content"]})
-                
-                key_name = config_sombrero["api_key_name"]
-                api_key_a_usar = st.secrets["groq"][key_name]
-                
-                client = OpenAI(
-                    base_url="https://api.groq.com/openai/v1",
-                    api_key=api_key_a_usar
-                )
-                
-                stream = client.chat.completions.create(
-                    model="llama-3.1-8b-instant",
-                    messages=mensajes_api,
-                    stream=True,
-                    temperature=0.7,
-                    max_tokens=250
-                )
-                response = st.write_stream(stream_con_retraso(stream))
-                st.session_state.messages.append({"role": "assistant", "content": response, "avatar": AVATAR_ACTUAL})
-                st.session_state.last_response = response
-                verificar_correo_semanal(st.session_state.usuario_actual)
-            except Exception as e:
-                error_msg = str(e).lower()
-                if "rate limit" in error_msg or "429" in error_msg or "limit" in error_msg:
-                    st.session_state.cooldown_hasta = datetime.now() + timedelta(seconds=40)
-                    msg_enfriamiento = "🌿 Respira, analiza nuestra comunicación... Muchos amigos están hablando conmigo ahora mismo. ¡Inténtalo de nuevo en 40 segundos!"
-                    st.warning(msg_enfriamiento)
-                    st.session_state.messages.append({"role": "assistant", "content": msg_enfriamiento, "avatar": "⏳"})
-                    st.rerun()
-                else:
-                    st.error(f"✨ Ups... Chemita tuvo un problema: {str(e)}")
+    # Bucle para que cada Chema seleccionado responda
+    for agente_key in quemas_activos:
+        config = SOMBREROS[agente_key]
+        avatar_emoji = agente_key.split(" ")[1] # Extrae el emoji del nombre
+        nombre_agente = agente_key.split(" ")[0] # Extrae el nombre
+        
+        with st.chat_message("assistant", avatar=avatar_emoji):
+            with st.spinner(f"✨ Chema {nombre_agente} está pensando..."):
+                try:
+                    historial_reciente = st.session_state.messages[-10:]
+                    mensajes_api = [{"role": "system", "content": config["prompt"]}]
+                    for msg in historial_reciente:
+                        mensajes_api.append({"role": msg["role"], "content": msg["content"]})
+                    
+                    key_name = config["api_key_name"]
+                    api_key_a_usar = st.secrets["groq"][key_name]
+                    
+                    client = OpenAI(
+                        base_url="https://api.groq.com/openai/v1",
+                        api_key=api_key_a_usar
+                    )
+                    
+                    stream = client.chat.completions.create(
+                        model="llama-3.1-8b-instant",
+                        messages=mensajes_api,
+                        stream=True,
+                        temperature=0.7,
+                        max_tokens=200
+                    )
+                    response = st.write_stream(stream_con_retraso(stream))
+                    st.session_state.messages.append({"role": "assistant", "content": response, "avatar": avatar_emoji})
+                    st.session_state.last_response = response
+                except Exception as e:
+                    error_msg = str(e).lower()
+                    if "rate limit" in error_msg or "429" in error_msg or "limit" in error_msg:
+                        st.session_state.cooldown_hasta = datetime.now() + timedelta(seconds=40)
+                        msg_enfriamiento = "🌿 Respira, analiza nuestra comunicación... Muchos amigos están hablando conmigo ahora mismo. ¡Inténtalo de nuevo en 40 segundos!"
+                        st.warning(msg_enfriamiento)
+                        st.session_state.messages.append({"role": "assistant", "content": msg_enfriamiento, "avatar": "⏳"})
+                        st.rerun()
+                    else:
+                        st.error(f"✨ Ups... Chema {nombre_agente} tuvo un problema: {str(e)}")
+                        break # Si un agente falla por otra razón, rompemos el bucle
+
+    # Verificar envío de correo quincenal al final de la ronda de respuestas
+    verificar_correo_quincenal(st.session_state.usuario_actual)
 
 # --- INTERFAZ DE USUARIO Y BLOQUEO DE 40s ---
 if st.session_state.cooldown_hasta and datetime.now() < st.session_state.cooldown_hasta:
@@ -456,7 +396,7 @@ else:
     if st.session_state.cooldown_hasta:
         st.session_state.cooldown_hasta = None 
 
-    placeholder_text = f"✏️ Escribe tu pregunta a Chema {sombrero_key}... 😊🏃‍♂️"
+    placeholder_text = f"✏️ Escribe tu pregunta a los Chemas... 😊🏃‍♂️"
     if prompt := st.chat_input(placeholder_text):
         procesar_respuesta(prompt)
 

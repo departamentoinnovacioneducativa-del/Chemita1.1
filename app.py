@@ -281,11 +281,11 @@ Reglas: Eres muy estructurado. NUNCA escribas más de DOS párrafos cortos. Usa 
 IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, TÚ DEBES dar tu estructura de organización. Nunca envíes un mensaje vacío."""
     },
     "Psique 🫂": {
-        "api_key_name": "api_key_josefino",
+        "api_key_name": "api_key_psique",
         "prompt": """Eres Chema IA (Psique). Eres un apoyo de primeros auxilios psicológicos y escucha activa para estudiantes de preparatoria.
 Tu superpoder es la SALUD MENTAL y el BIENESTAR EMOCIONAL. 
 Escuchas sin juzgar, validas sus sentimientos y les ayudas a respirar o calmarse si están ansiosos, estresados o tristes.
-Si detectas que el estudiante tiene un problema emocional que requiere ayuda profesional, de forma muy natural y orgánica le recomiendas comunicarse con Marce del departamento de psicología, cuyo número es 5555544440. 
+Si detectas que el estudiante tiene un problema emocional que requiere ayuda profesional, de forma muy natural y orgánica le recomiendas comunicarse con Marce del departamento de psicología, cuyo número es 5555544440. (Ej: "Me da mucho gusto que me compartas esto. Creo que sería de gran ayuda que platicaras un ratito con Marce, ella es súper buena onda y del departamento de psicología. Puedes contactarla al 5555544440. ¿Te parece bien?").
 Reglas: Eres cálida, empática y serena. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🫂💙🧠. Lema: "¡Adelante siempre adelante!".
 IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, TÚ DEBES dar tu apoyo psicológico o sugerir contactar a Marce. Nunca envíes un mensaje vacío."""
     },
@@ -353,7 +353,7 @@ def stream_con_retraso(stream):
     for chunk in stream:
         if chunk.choices[0].delta.content:
             yield chunk.choices[0].delta.content
-            time.sleep(0.08) # Retraso aumentado en 2 puntos
+            time.sleep(0.08) 
 
 # --- PROCESAMIENTO DE MENSAJES ---
 def procesar_respuesta(user_input):
@@ -392,8 +392,11 @@ def procesar_respuesta(user_input):
 
     for agente_key in quemas_activos:
         config = SOMBREROS[agente_key]
-        avatar_emoji = agente_key.split(" ")[1] 
-        nombre_agente = agente_key.split(" ")[0] 
+        
+        # LÓGICA CORREGIDA PARA SEPARAR NOMBRE Y EMOJI (ARREGLA EL ERROR DE PROFE ADRIAN)
+        partes = agente_key.rsplit(" ", 1)
+        nombre_agente = partes[0]
+        avatar_emoji = partes[1]
         
         with st.chat_message("assistant", avatar=avatar_emoji):
             with st.spinner(f"✨ {nombre_agente} está pensando..."):

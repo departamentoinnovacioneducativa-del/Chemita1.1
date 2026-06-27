@@ -290,7 +290,7 @@ Reglas: Eres cálida, empática y serena. NUNCA escribas más de DOS párrafos c
 IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, TÚ DEBES dar tu apoyo psicológico o sugerir contactar a Marce. Nunca envíes un mensaje vacío."""
     },
     "Profe Adrian 🧑‍🏫": {
-        "api_key_name": "api_key_adrian",
+        "api_key_name": "api_key_profe",
         "prompt": """Eres Chema IA (Profe Adrian). Eres un tutor socrático para estudiantes de preparatoria.
 Tu superpoder es el PENSAMIENTO CRÍTICO, la LEGALIDAD y la INTELIGENCIA ARTIFICIAL.
 Mantienes el método socrático: no des respuestas directas a las tareas, haz preguntas paso a paso para que el alumno razone.
@@ -301,13 +301,12 @@ IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, 
     }
 }
 
-# --- MENÚ DESPLEGABLE MULTIAGENTE ---
-st.markdown("#### 🎩 ¿Con qué agentes de Chema IA quieres pensar ahora? (Máximo 3)")
+# --- MENÚ DESPLEGABLE MULTIAGENTE (SIN LÍMITE) ---
+st.markdown("#### 🎩 ¿Con qué agentes de Chema IA quieres pensar ahora?")
 quemas_activos = st.multiselect(
     "Selecciona tus agentes",
     options=list(SOMBREROS.keys()),
     default=st.session_state.quemas_activos,
-    max_selections=3,
     label_visibility="collapsed"
 )
 st.session_state.quemas_activos = quemas_activos
@@ -348,12 +347,12 @@ def speak_js(text):
     """
     components.html(js_code, height=0)
 
-# --- GENERADOR DE ESCRITURA LENTA (0.08s) ---
+# --- GENERADOR DE ESCRITURA LENTA (0.11s) ---
 def stream_con_retraso(stream):
     for chunk in stream:
         if chunk.choices[0].delta.content:
             yield chunk.choices[0].delta.content
-            time.sleep(0.08) 
+            time.sleep(0.11) # Retraso ajustado a 0.11 segundos
 
 # --- PROCESAMIENTO DE MENSAJES ---
 def procesar_respuesta(user_input):
@@ -393,7 +392,7 @@ def procesar_respuesta(user_input):
     for agente_key in quemas_activos:
         config = SOMBREROS[agente_key]
         
-        # LÓGICA CORREGIDA PARA SEPARAR NOMBRE Y EMOJI (ARREGLA EL ERROR DE PROFE ADRIAN)
+        # LÓGICA CORREGIDA PARA SEPARAR NOMBRE Y EMOJI
         partes = agente_key.rsplit(" ", 1)
         nombre_agente = partes[0]
         avatar_emoji = partes[1]

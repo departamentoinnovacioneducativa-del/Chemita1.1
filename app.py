@@ -1,12 +1,4 @@
-¡Hola! El problema ocurre porque **pegaste todo el reglamento completo dentro del prompt de Josefino**. 
 
-La API de Groq tiene un límite de memoria (tokens). Al enviarle un texto tan gigantesco en cada mensaje, se excede el límite y la API arroja un error de "contexto" (lo que hace que el código diga "Ups, se distrajo"). 
-
-Para solucionarlo, he **resumido el reglamento en puntos clave dentro de su cerebro**. Así Josefino es igual de inteligente y conoce las reglas, pero sin saturar a la API. Además, como tu código se cortó por la mitad en tu mensaje, te entrego el código **completo y funcional** hasta el final.
-
-Aquí tienes la versión definitiva. Cópiala y pégala completa en tu `app.py`:
-
-```python
 import streamlit as st
 from openai import OpenAI
 import streamlit.components.v1 as components
@@ -503,4 +495,3 @@ else:
                 st.session_state.messages = []
                 st.session_state.last_response = ""
                 st.rerun()
-```

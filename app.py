@@ -301,26 +301,23 @@ IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, 
     }
 }
 
-# --- SELECCIÓN VISUAL MULTIAGENTE (CASILLAS DE VERIFICACIÓN) ---
+# --- MENÚ DESPLEGABLE MULTIAGENTE (RESPETA EL ORDEN DE SELECCIÓN) ---
 st.markdown("#### 🎩 ¿Con qué agentes de Chema IA quieres pensar ahora?")
-st.markdown("Selecciona uno o varios agentes para conversar al mismo tiempo:")
+st.markdown("*(El orden en que los selecciones aquí será el orden en que te responderán)*")
 
-cols = st.columns(4)
-nuevos_activos = []
-
-for i, agente_key in enumerate(SOMBREROS.keys()):
-    with cols[i % 4]:
-        if st.checkbox(agente_key, value=(agente_key in st.session_state.quemas_activos), key=f"cb_{agente_key}"):
-            nuevos_activos.append(agente_key)
-
-st.session_state.quemas_activos = nuevos_activos
-quemas_activos = nuevos_activos
+quemas_activos = st.multiselect(
+    "Selecciona tus agentes (El orden importa)",
+    options=list(SOMBREROS.keys()),
+    default=st.session_state.quemas_activos,
+    label_visibility="collapsed"
+)
+st.session_state.quemas_activos = quemas_activos
 
 if not quemas_activos:
     st.warning("⚠️ Por favor, selecciona al menos un agente para empezar a chatear.")
     st.stop()
 
-st.info(f"**Agentes activos en esta conversación:** {', '.join(quemas_activos)}")
+st.info(f"**Orden de respuesta establecido:** {', '.join(quemas_activos)}")
 
 if not st.session_state.messages:
     bienvenida = f"✨ ¡Hola, {st.session_state.usuario_actual}! Somos Chema IA. Tu equipo de tutores de preparatoria. ¡Adelante siempre adelante! ¿En qué te ayudamos a pensar hoy? 😊📚"
@@ -394,6 +391,7 @@ def procesar_respuesta(user_input):
 
     hablar_en_plural = len(quemas_activos) > 1
 
+    # El bucle respeta el orden de la lista quemas_activos (orden de selección)
     for agente_key in quemas_activos:
         config = SOMBREROS[agente_key]
         

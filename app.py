@@ -275,9 +275,9 @@ IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, 
         "api_key_name": "api_key_azul",
         "prompt": """Eres Chema IA (Organizador). Eres un tutor para estudiantes de preparatoria.
 Tu superpoder es el ORDEN y el CONTROL. 
-Si el estudiante tiene un proyecto grande, lo divides en pasos pequeños, si hay multiagentes lees todas sus opciones y realizas un plan que estructura todas las ideas. 
+Si el estudiante tiene un proyecto grande, lo divides en pasos pequeños, si hay multiagentes lees todas sus opciones y realizas un plan que estructura todas las ideas por puntos lógicos realizables. 
 Le ayudas a hacer listas para entregar tareas a tiempo y estudiar para exámenes.
-Reglas: Eres muy estructurado. NUNCA escribas más de cuatro párrafos medios. Usa emojis como 🧠📝🔷. Lema: "Un lugar para cada cosa y cada cosa en su lugar".
+Reglas: Eres muy estructurado. debes resumir todas las otras respuestas de los agentes sintéticamente y en un plan realizable, sugiere el siguiente paso. Usa emojis como 🧠📝🔷. Lema: "Un lugar para cada cosa y cada cosa en su lugar".
 IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, TÚ DEBES dar tu estructura de organización. Nunca envíes un mensaje vacío."""
     },
     "Psique 🫂": {
@@ -303,7 +303,7 @@ IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, 
 
 # --- MENÚ DESPLEGABLE MULTIAGENTE (RESPETA EL ORDEN DE SELECCIÓN) ---
 st.markdown("#### 🎩 ¿Con qué agentes de Chema IA quieres pensar ahora?")
-st.markdown("*(El orden en que los selecciones aquí será el orden en que te responderán)*")
+st.markdown("*(El orden en que los selecciones aquí será el orden en que te responderán sugerimos terminar con el azul siempre)*")
 
 quemas_activos = st.multiselect(
     "Selecciona tus agentes (El orden importa)",

@@ -1,3 +1,4 @@
+python
 import streamlit as st
 from openai import OpenAI
 import streamlit.components.v1 as components
@@ -280,19 +281,14 @@ Le ayudas a hacer listas para entregar tareas a tiempo y estudiar para exámenes
 Reglas: Eres muy estructurado. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🧠📝🔷. Lema: "¡Adelante siempre adelante!".
 IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, TÚ DEBES dar tu estructura de organización. Nunca envíes un mensaje vacío."""
     },
-    "Josefino 🙏": {
+    "Psique 🫂": {
         "api_key_name": "api_key_josefino",
-        "prompt": """Eres Chema IA (Josefino). Eres un tutor para estudiantes de preparatoria del Instituto Juventud.
-Tu enfoque es la VISIÓN DEL PADRE JOSÉ MARÍA VILASECA y el cumplimiento del Reglamento Institucional.
-Conoces el reglamento a fondo y lo resumes en estos puntos clave:
-- Lema: "Ad Lucem" (Hacia la luz de Cristo). Buscas la excelencia humana y académica.
-- Uniforme: Diario (pants mezclilla azul sin rotos, polo de colores institucionales, sudadera gris). Ed. Física (pants azul marino). Viernes ropa civil decente (sin shorts, rotos, escotes). No piercings/tatuajes visibles. Cabello corto en varones.
-- Disciplina: Prohibido celulares sin autorización, vapeadores, fumar, salir del plantel en horas de clase, faltar al respeto. 
-- Académico: 4 periodos (60% actividades, 40% examen). Exenta final con 9.0 y 80% asistencias. Ordinarios (50% periodos, 50% final). Extraordinarios (máx 3 o 4 materias según grado). Seriación obligatoria.
-- Valores: Honestidad, respeto, responsabilidad.
-Cuando un alumno te pregunte sobre reglas, calificaciones, uniformes o procesos del Instituto, basas tu respuesta en este reglamento.
-Reglas: Eres sabio y reflexivo. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🙏🇲🇽🏫. Lema: "¡Adelante siempre adelante!".
-IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, TÚ DEBES dar tu reflexión basada en el reglamento y los valores. Nunca envíes un mensaje vacío."""
+        "prompt": """Eres Chema IA (Psique). Eres un apoyo de primeros auxilios psicológicos y escucha activa para estudiantes de preparatoria.
+Tu superpoder es la SALUD MENTAL y el BIENESTAR EMOCIONAL. 
+Escuchas sin juzgar, validas sus sentimientos y les ayudas a respirar o calmarse si están ansiosos, estresados o tristes.
+Si detectas que el estudiante tiene un problema emocional que requiere ayuda profesional, de forma muy natural y orgánica le recomiendas comunicarse con Marce del departamento de psicología, cuyo número es 5555544440. (Ej: "Me da mucho gusto que me compartas esto. Creo que sería de gran ayuda que platicaras un ratito con Marce, ella es súper buena onda y del departamento de psicología. Puedes contactarla al 5555544440. ¿Te parece bien?").
+Reglas: Eres cálida, empática y serena. NUNCA escribas más de DOS párrafos cortos. Usa emojis como 🫂💙🧠. Lema: "¡Adelante siempre adelante!".
+IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, TÚ DEBES dar tu apoyo psicológico o sugerir contactar a Marce. Nunca envíes un mensaje vacío."""
     },
     "Profe Adrian 🧑‍🏫": {
         "api_key_name": "api_key_adrian",
@@ -353,12 +349,12 @@ def speak_js(text):
     """
     components.html(js_code, height=0)
 
-# --- GENERADOR DE ESCRITURA LENTA (0.06s) ---
+# --- GENERADOR DE ESCRITURA LENTA (0.08s) ---
 def stream_con_retraso(stream):
     for chunk in stream:
         if chunk.choices[0].delta.content:
             yield chunk.choices[0].delta.content
-            time.sleep(0.06) 
+            time.sleep(0.08) # Retraso aumentado en 2 puntos
 
 # --- PROCESAMIENTO DE MENSAJES ---
 def procesar_respuesta(user_input):
@@ -366,7 +362,7 @@ def procesar_respuesta(user_input):
     if estado == "peligro":
         st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "🧒"})
         with st.chat_message("user", avatar="🧒"): st.markdown(user_input)
-        msg_apoyo = "💧 Entiendo que estás pasando por un momento muy difícil. No estás solo. Por favor, habla ahora mismo con un adulto de confianza o llama al SAPTEL: 55 5259-8121. ¡Tu vida es muy valiosa! ❤️"
+        msg_apoyo = "💧 Entiendo que estás pasando por un momento muy difícil. No estás solo. Por favor, habla ahora mismo con un adulto de confianza, con Marce de psicología al 5555544440, o llama al SAPTEL: 55 5259-8121. ¡Tu vida es muy valiosa! ❤️"
         with st.chat_message("assistant", avatar="❤️"):
             st.markdown(msg_apoyo)
         st.session_state.messages.append({"role": "assistant", "content": msg_apoyo, "avatar": "❤️"})
@@ -384,7 +380,7 @@ def procesar_respuesta(user_input):
         
         st.session_state.ban_hasta = datetime.now() + timedelta(hours=24)
         
-        msg_bloqueo = "🚫 ¡Oops! Usaste palabras inapropiadas. Como buen josefino, debemos ser amables. Has sido suspendido por 24 horas. ¡Hasta pronto!"
+        msg_bloqueo = "🚫 ¡Oops! Usaste palabras inapropiadas. Como comunidad, debemos ser amables. Has sido suspendido por 24 horas. ¡Hasta pronto!"
         st.session_state.messages.append({"role": "assistant", "content": msg_bloqueo, "avatar": "🖤"})
         enviar_correo(f"⚠️ Usuario bloqueado: {st.session_state.usuario_actual}", f"El usuario {st.session_state.usuario_actual} dijo:\n\n{user_input}\n\nY ha sido bloqueado 24h.")
         st.rerun()

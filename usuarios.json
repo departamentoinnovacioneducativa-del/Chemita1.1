@@ -1,152 +1,58 @@
 {
-  "prueba1": {
+  "lucem1": {
     "password": "1234e",
+    "tipo": "lucem",
     "bloqueado_hasta": null,
-    "ultimo_correo": null
+    "ultimo_correo": null,
+    "adlucem_usos": []
   },
-  "prueba2": {
+  "lucem2": {
     "password": "1234e",
+    "tipo": "lucem",
     "bloqueado_hasta": null,
-    "ultimo_correo": null
+    "ultimo_correo": null,
+    "adlucem_usos": []
   },
-  "prueba3": {
+  "plus21": {
     "password": "1234e",
+    "tipo": "plus2",
     "bloqueado_hasta": null,
-    "ultimo_correo": null
+    "ultimo_correo": null,
+    "adlucem_usos": []
   },
-  "prueba4": {
+  "plus22": {
     "password": "1234e",
+    "tipo": "plus2",
     "bloqueado_hasta": null,
-    "ultimo_correo": null
+    "ultimo_correo": null,
+    "adlucem_usos": []
   },
-  "prueba5": {
+  "plus11": {
     "password": "1234e",
+    "tipo": "plus1",
     "bloqueado_hasta": null,
-    "ultimo_correo": null
+    "ultimo_correo": null,
+    "adlucem_usos": []
   },
-  "prueba6": {
+  "plus12": {
     "password": "1234e",
+    "tipo": "plus1",
     "bloqueado_hasta": null,
-    "ultimo_correo": null
+    "ultimo_correo": null,
+    "adlucem_usos": []
   },
-  "prueba7": {
+  "normal1": {
     "password": "1234e",
+    "tipo": "normal",
     "bloqueado_hasta": null,
-    "ultimo_correo": null
+    "ultimo_correo": null,
+    "adlucem_usos": []
   },
-  "prueba8": {
+  "normal2": {
     "password": "1234e",
+    "tipo": "normal",
     "bloqueado_hasta": null,
-    "ultimo_correo": null
-  },
-  "prueba9": {
-    "password": "1234e",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null
-  },
-  "prueba10": {
-    "password": "1234e",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null
-  },
-  "prueba11": {
-    "password": "1234e",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null
-  },
-  "prueba12": {
-    "password": "1234e",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null
-  },
-  "prueba13": {
-    "password": "1234e",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null
-  },
-  "prueba14": {
-    "password": "1234e",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null
-  },
-  "prueba15": {
-    "password": "1234e",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null
-  },
-  "prueba16": {
-    "password": "1234e",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null
-  },
-  "prueba17": {
-    "password": "1234e",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null
-  },
-  "prueba18": {
-    "password": "1234e",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null
-  },
-  "prueba19": {
-    "password": "1234e",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null
-  },
-  "prueba20": {
-    "password": "1234e",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null
-  },
-  "prueba21": {
-    "password": "1234e",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null
-  },
-  "prueba22": {
-    "password": "1234e",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null
-  },
-  "prueba23": {
-    "password": "1234e",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null
-  },
-  "prueba24": {
-    "password": "1234e",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null
-  },
-  "prueba25": {
-    "password": "1234e",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null
-  },
-  "prueba26": {
-    "password": "1234e",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null
-  },
-  "prueba27": {
-    "password": "1234e",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null
-  },
-  "prueba28": {
-    "password": "1234e",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null
-  },
-  "prueba29": {
-    "password": "1234e",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null
-  },
-  "prueba30": {
-    "password": "1234e",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null
+    "ultimo_correo": null,
+    "adlucem_usos": []
   }
 }

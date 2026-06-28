@@ -146,32 +146,40 @@ def verificar_correo_quincenal(usuario):
             usuarios[usuario]["ultimo_correo"] = datetime.now().isoformat()
             guardar_usuarios(usuarios)
 
-# --- SISTEMA MODO PRO Y BUCLUES ---
+# --- SISTEMA DE LÍMITES (PRO, MULTIPRO Y BUCLUES) ---
 LIMITES_MODO_PRO = {"adlucem": 4, "lucem2": 3, "lucem1": 2, "normal": 1}
+LIMITES_MULTIPRO = {"adlucem": 1, "lucem2": 1, "lucem1": 0, "normal": 0}
 LIMITES_BUCLUES = {"adlucem": 5, "lucem2": 3, "lucem1": 2, "normal": 1} # 1 = sin bucles
 
-def verificar_y_registrar_uso_pro(usuario, registrar=False):
+def verificar_y_registrar_uso(usuario, tipo_uso, registrar=False):
     usuarios = cargar_usuarios()
     if usuario not in usuarios:
         return 0
     
-    usos = usuarios[usuario].get("modo_pro_usos", [])
+    clave_usos = f"{tipo_uso}_usos"
+    usos = usuarios[usuario].get(clave_usos, [])
     ahora = datetime.now()
     usos_validos = [u for u in usos if ahora - datetime.fromisoformat(u) < timedelta(hours=1)]
     
     tipo = usuarios[usuario].get("tipo", "normal")
-    limite = LIMITES_MODO_PRO.get(tipo, 1)
     
+    if tipo_uso == "modo_pro":
+        limite = LIMITES_MODO_PRO.get(tipo, 1)
+    elif tipo_uso == "multipro":
+        limite = LIMITES_MULTIPRO.get(tipo, 0)
+    else:
+        limite = 0
+        
     usos_restantes = limite - len(usos_validos)
     
     if registrar and usos_restantes > 0:
         usos_validos.append(ahora.isoformat())
-        usuarios[usuario]["modo_pro_usos"] = usos_validos
+        usuarios[usuario][clave_usos] = usos_validos
         guardar_usuarios(usuarios)
         usos_restantes -= 1
     elif not registrar:
         if len(usos_validos) != len(usos):
-            usuarios[usuario]["modo_pro_usos"] = usos_validos
+            usuarios[usuario][clave_usos] = usos_validos
             guardar_usuarios(usuarios)
             
     return usos_restantes
@@ -193,6 +201,8 @@ if "quemas_activos" not in st.session_state:
     st.session_state.quemas_activos = ["Hechos 🤍"]
 if "modo_pro_activo" not in st.session_state:
     st.session_state.modo_pro_activo = False
+if "multipro_activo" not in st.session_state:
+    st.session_state.multipro_activo = False
 if "num_bucles" not in st.session_state:
     st.session_state.num_bucles = 1
 
@@ -335,7 +345,7 @@ IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, 
     }
 }
 
-# --- MENÚ DESPLEGABLE MULTIAGENTE Y CONFIGURACIÓN DE BUCLUES ---
+# --- MENÚ DESPLEGABLE MULTIAGENTE ---
 st.markdown("#### 🎩 ¿Con qué agentes de Chema IA quieres pensar ahora?")
 st.markdown("*(El orden en que los selecciones aquí será el orden en que te responderán)*")
 
@@ -357,27 +367,52 @@ st.info(f"**Orden de respuesta establecido:** {', '.join(quemas_activos)}")
 usuarios_db = cargar_usuarios()
 tipo_usuario_actual = usuarios_db.get(st.session_state.usuario_actual, {}).get("tipo", "normal")
 max_bucles = LIMITES_BUCLUES.get(tipo_usuario_actual, 1)
+limite_multipro = LIMITES_MULTIPRO.get(tipo_usuario_actual, 0)
 
-# --- BOTONES MODO PRO Y RONDAS (BUCLUES) ---
-usos_restantes_pro = verificar_y_registrar_uso_pro(st.session_state.usuario_actual)
-
+# --- PANEL DE CONTROL: PRO, MULTIPRO Y BUCLUES ---
 col_ad1, col_ad2 = st.columns(2)
+
 with col_ad1:
-    if st.session_state.modo_pro_activo:
-        st.success("🚀 **MODO PRO ACTIVO.** Próxima resp. ilimitada.")
+    # Si solo es 1 agente, mostramos Modo Pro
+    if len(quemas_activos) == 1:
+        usos_pro = verificar_y_registrar_uso(st.session_state.usuario_actual, "modo_pro")
+        if st.session_state.modo_pro_activo:
+            st.success("🚀 **MODO PRO ACTIVO.** Resp. ilimitada.")
+        else:
+            st.info(f"Modo Pro restantes: **{usos_pro}**")
+        if st.button("🚀 Activar Modo Pro", disabled=(usos_pro <= 0 or st.session_state.modo_pro_activo), use_container_width=True):
+            st.session_state.modo_pro_activo = True
+            st.rerun()
+            
+    # Si hay más de 1 agente, mostramos Multiagentes Pro (solo si el usuario tiene permiso)
+    elif len(quemas_activos) > 1 and limite_multipro > 0:
+        usos_multipro = verificar_y_registrar_uso(st.session_state.usuario_actual, "multipro")
+        if st.session_state.multipro_activo:
+            st.success("🌟 **MULTIPRO ACTIVO.** Resp. ilimitadas.")
+        else:
+            st.info(f"MultiPro restantes: **{usos_multipro}**")
+        if st.button("🌟 Activar MultiPro", disabled=(usos_multipro <= 0 or st.session_state.multipro_activo), use_container_width=True):
+            st.session_state.multipro_activo = True
+            st.session_state.num_bucles = 1 # Forzar 1 sola ronda para proteger la API
+            st.rerun()
     else:
-        st.info(f"Modo Pro restantes: **{usos_restantes_pro}**")
-    if st.button("🚀 Activar Modo Pro", disabled=(usos_restantes_pro <= 0 or st.session_state.modo_pro_activo), use_container_width=True):
-        st.session_state.modo_pro_activo = True
-        st.rerun()
+        st.info("Selecciona agentes para ver opciones.")
 
 with col_ad2:
-    if len(quemas_activos) > 1 and max_bucles > 1:
-        st.info(f"Tipo: **{tipo_usuario_actual}** (Máx {max_bucles - 1} bucles)")
-        st.session_state.num_bucles = st.slider("🔁 Bucles (Rondas)", min_value=1, max_value=max_bucles, value=1, step=1)
+    # Los bucles solo aparecen si NO hay Modos Pro activos y hay más de 1 agente
+    if len(quemas_activos) > 1 and not st.session_state.modo_pro_activo and not st.session_state.multipro_activo:
+        if max_bucles > 1:
+            st.info(f"Tipo: **{tipo_usuario_actual}** (Máx {max_bucles - 1} bucles)")
+            st.session_state.num_bucles = st.slider("🔁 Bucles (Rondas)", min_value=1, max_value=max_bucles, value=1, step=1)
+        else:
+            st.session_state.num_bucles = 1
+            st.info("Bucles desactivados para tu tipo.")
     else:
         st.session_state.num_bucles = 1
-        st.info("Bucles desactivados.")
+        if len(quemas_activos) == 1:
+            st.info("Bucles requieren +1 agente.")
+        else:
+            st.info("Bucles desactivados (Pro activo).")
 
 if not st.session_state.messages:
     bienvenida = f"✨ ¡Hola, {st.session_state.usuario_actual}! Somos Chema IA. Tu equipo de tutores de preparatoria. ¡Adelante siempre adelante! ¿En qué te ayudamos a pensar hoy? 😊📚"
@@ -452,10 +487,14 @@ def procesar_respuesta(user_input):
     hablar_en_plural = len(quemas_activos) > 1
     num_bucles = st.session_state.get("num_bucles", 1)
     es_pro = st.session_state.get("modo_pro_activo", False)
+    es_multipro = st.session_state.get("multipro_activo", False)
     
     if es_pro:
-        verificar_y_registrar_uso_pro(st.session_state.usuario_actual, registrar=True)
+        verificar_y_registrar_uso(st.session_state.usuario_actual, "modo_pro", registrar=True)
         st.session_state.modo_pro_activo = False
+    elif es_multipro:
+        verificar_y_registrar_uso(st.session_state.usuario_actual, "multipro", registrar=True)
+        st.session_state.multipro_activo = False
 
     # --- INICIO DE LOS BUCLES (RONDAS DE DISCUSIÓN) ---
     for bucle_actual in range(num_bucles):
@@ -474,10 +513,10 @@ def procesar_respuesta(user_input):
                         historial_reciente = st.session_state.messages[-12:] 
                         
                         system_prompt = config["prompt"]
-                        if es_pro:
+                        if es_pro or es_multipro:
                             system_prompt = system_prompt.replace("NUNCA escribas más de DOS párrafos cortos", "NO TIENES LÍMITE DE LONGITUD, redacta una respuesta extensa, profunda y detallada")
                             system_prompt = system_prompt.replace("NUNCA escribas más de cuatro párrafos medios", "NO TIENES LÍMITE DE LONGITUD, redacta una respuesta extensa, profunda y detallada")
-                            max_tokens_api = 2000
+                            max_tokens_api = 800 # Reducido a 800 para proteger la API de bloqueos
                         else:
                             max_tokens_api = 200
 

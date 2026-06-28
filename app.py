@@ -16,63 +16,164 @@ st.set_page_config(
     menu_items={'Get Help': None, 'Report a bug': None, 'About': None}
 )
 
-# CSS BASE Y MEJORAS VISUALES
+# CSS MEJORADO (Diseño Moderno y Responsivo)
 css_base = """
 <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    [data-testid="stDecoration"] {display: none;}
-    [data-testid="stToolbar"] {display: none;}
-    [data-testid="stStatusWidget"] {display: none;}
-    .stDeployButton {display: none;}
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+    #MainMenu, footer, header, [data-testid="stDecoration"], [data-testid="stToolbar"], [data-testid="stStatusWidget"], .stDeployButton {
+        visibility: hidden; display: none;
+    }
+
+    html, body, [class*="css"] {
+        font-family: 'Poppins', sans-serif;
+    }
 
     .stApp {
-        max-width: 100%; padding: 0; background-color: #001F3F !important; 
-        transition: background-color 0.5s ease;
+        background: linear-gradient(135deg, #001F3F 0%, #003366 100%);
+        padding: 20px 10px;
     }
+
+    /* Marco principal */
     .stApp > div {
-        border: 8px solid #2ECC71 !important; border-radius: 15px;
-        overflow: hidden; box-sizing: border-box; 
-        transition: border-color 0.5s ease;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(46, 204, 113, 0.5);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        max-width: 850px;
+        margin: 0 auto;
+        padding: 25px;
     }
-    [data-testid="stBlock"] { padding: 15px; }
-    
-    div[data-testid="stImageContainer"] { margin: 0 0 15px 0 !important; padding: 0 !important; }
+
+    /* Banner e imágenes */
+    div[data-testid="stImageContainer"] { margin: 0 0 20px 0 !important; padding: 0 !important; border-radius: 15px; overflow: hidden; }
     div[data-testid="stImageContainer"] img {
-        width: 100% !important; height: auto !important; max-height: 200px; 
-        object-fit: cover !important; border-radius: 10px; border: 3px solid #2ECC71; 
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        width: 100% !important; height: auto !important; max-height: 220px; 
+        object-fit: cover !important; border-radius: 15px; border: 3px solid #2ECC71; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
+
+    /* Burbujas de chat */
     [data-testid="stChatMessage"] {
-        background-color: #FFFDE0 !important; border-radius: 15px;
-        padding: 15px; margin: 10px 0; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        color: #333 !important; 
+        background: rgba(255, 255, 255, 0.95) !important;
+        border-radius: 15px;
+        padding: 15px 20px;
+        margin: 10px 0;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        color: #333 !important;
+        border-left: 5px solid #2ECC71;
+        animation: slideIn 0.4s ease-out;
     }
-    [data-testid="stChatInput"] { background-color: transparent !important; padding-bottom: 10px; }
+
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Entrada de texto */
+    [data-testid="stChatInput"] { background: transparent !important; padding-bottom: 10px; margin-top: 15px; }
     [data-testid="stChatInput"] > div {
-        border-radius: 25px; border: 2px solid #2ECC71 !important; 
-        background-color: white !important; padding: 5px 15px !important;
+        border-radius: 25px;
+        border: 2px solid #2ECC71 !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        padding: 8px 20px !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
     [data-testid="stChatInput"] input { color: #333 !important; }
-    [data-testid="stChatInputSubmit"] { color: #2ECC71 !important; }
+    [data-testid="stChatInputSubmit"] { color: #2ECC71 !important; font-size: 1.2em; }
+
+    /* Títulos */
     .custom-title-chemita {
-        text-align: center; color: #FFE484; font-size: clamp(2em, 6vw, 3.5em); 
-        font-weight: bold; margin-bottom: 0; line-height: 1.2;
+        text-align: center; color: #2ECC71; 
+        font-size: clamp(2em, 6vw, 3.2em); 
+        font-weight: 700; margin-bottom: 0; line-height: 1.2;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
     }
     .custom-subtitle-chemita {
-        text-align: center; color: #FFE484; font-size: clamp(0.9em, 3vw, 1.2em); 
-        margin-top: 5px; margin-bottom: 20px;
+        text-align: center; color: #A3E4D7; 
+        font-size: clamp(0.9em, 3vw, 1.1em); 
+        margin-top: 5px; margin-bottom: 25px; font-weight: 400;
     }
+
+    /* Botones */
     .stButton button {
-        background-color: #2ECC71 !important; color: white !important; font-weight: bold;
-        border-radius: 20px; border: none; padding: 5px 10px; transition: transform 0.2s, background-color 0.2s;
-        font-size: 0.8em;
+        background: linear-gradient(45deg, #2ECC71, #27AE60) !important;
+        color: white !important; font-weight: 600;
+        border-radius: 15px; border: none; padding: 10px 20px;
+        transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);
+        width: 100%;
     }
-    .stButton button:hover { transform: scale(1.03); background-color: #27AE60 !important; }
-    
+    .stButton button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(46, 204, 113, 0.5);
+        background: linear-gradient(45deg, #27AE60, #2ECC71) !important;
+    }
+    .stButton button:disabled {
+        background: #555 !important; color: #aaa !important; cursor: not-allowed; box-shadow: none; transform: none;
+    }
+
+    /* Login Box */
     .login-box {
-        background-color: #FFFDE0; padding: 30px; border-radius: 15px; margin-top: 20px;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(46, 204, 113, 0.3);
+        border-radius: 20px;
+        padding: 40px;
+        margin: 20px auto;
+        max-width: 450px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    .login-box input {
+        background: rgba(255,255,255,0.9) !important;
+        border-radius: 10px !important;
+        color: #333 !important;
+    }
+
+    /* Panel de control */
+    [data-testid="stVerticalBlockBorderWrapper"] {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(46, 204, 113, 0.2);
+        border-radius: 15px;
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+
+    [data-testid="stAlertContainer"] {
+        background: rgba(46, 204, 113, 0.2) !important;
+        border: 1px solid #2ECC71 !important;
+        border-radius: 10px !important;
+        color: white !important;
+    }
+    [data-testid="stAlertContainer"] p, [data-testid="stAlertContainer"] span {
+        color: #E8F8F5 !important;
+    }
+
+    /* --- RESPONSIVIDAD MÓVIL --- */
+    @media (max-width: 768px) {
+        .stApp {
+            padding: 10px 5px;
+        }
+        .stApp > div {
+            padding: 15px 10px;
+            border-width: 2px;
+        }
+        .login-box {
+            padding: 20px;
+            margin: 10px auto;
+        }
+        [data-testid="stChatMessage"] {
+            padding: 10px 15px;
+            margin: 8px 0;
+        }
+        [data-testid="stHorizontalBlock"] {
+            gap: 5px;
+        }
+        /* Asegura que las columnas de control se apilen en móvil */
+        [data-testid="stHorizontalBlock"] > div {
+            width: 100% !important;
+            flex: none !important;
+        }
     }
 </style>
 """
@@ -99,7 +200,7 @@ def guardar_usuarios(usuarios):
         print(f"Error al guardar: {e}")
         return False
 
-# --- SISTEMA DE SEGURIDAD Y NOTIFICACIONES ---
+# --- SISTEMA DE SEGURIDAD Y NOTIFICACIONES (SILENCIOSO) ---
 def enviar_correo(asunto, mensaje):
     try:
         resend.api_key = st.secrets["resend"]["api_key"]
@@ -110,9 +211,8 @@ def enviar_correo(asunto, mensaje):
             "subject": asunto,
             "text": mensaje
         })
-        st.toast("✉️ Alerta enviada al administrador.")
     except Exception as e:
-        st.error(f"Error al enviar correo de alerta: {e}")
+        print(f"Error al enviar correo de alerta: {e}")
 
 def revisar_seguridad(texto):
     texto_lower = texto.lower().strip()
@@ -130,16 +230,20 @@ def revisar_seguridad(texto):
     return "ok"
 
 def verificar_correo_quincenal(usuario):
+    if st.session_state.get("demo_mode"): return # Los demo no guardan quincenal
     usuarios = cargar_usuarios()
     if usuario in usuarios:
         ultimo_envio_str = usuarios[usuario].get("ultimo_correo")
         enviar = False
+        
         if not ultimo_envio_str:
-            enviar = True
+            usuarios[usuario]["ultimo_correo"] = datetime.now().isoformat()
+            guardar_usuarios(usuarios)
         else:
             fecha_ultimo = datetime.fromisoformat(ultimo_envio_str)
             if datetime.now() - fecha_ultimo >= timedelta(days=15):
                 enviar = True
+                
         if enviar and len(st.session_state.messages) > 2:
             historial = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
             enviar_correo(f"📋 Resumen quincenal de Chema IA - Usuario: {usuario}", f"Historial de los últimos 15 días con {usuario}:\n\n{historial}")
@@ -147,14 +251,35 @@ def verificar_correo_quincenal(usuario):
             guardar_usuarios(usuarios)
 
 # --- SISTEMA DE LÍMITES (PRO, MULTIPRO Y BUCLUES) ---
-LIMITES_MODO_PRO = {"adlucem": 4, "lucem2": 3, "lucem1": 2, "normal": 1}
-LIMITES_MULTIPRO = {"adlucem": 1, "lucem2": 1, "lucem1": 0, "normal": 0}
-LIMITES_BUCLUES = {"adlucem": 5, "lucem2": 3, "lucem1": 2, "normal": 1} # 1 = sin bucles
+LIMITES_MODO_PRO = {"adlucem": 4, "lucem2": 3, "lucem1": 2, "normal": 1, "demo": 3}
+LIMITES_MULTIPRO = {"adlucem": 1, "lucem2": 1, "lucem1": 0, "normal": 0, "demo": 1}
+LIMITES_BUCLUES = {"adlucem": 5, "lucem2": 3, "lucem1": 2, "normal": 1, "demo": 3} 
 
 def verificar_y_registrar_uso(usuario, tipo_uso, registrar=False):
+    # Si es usuario demo, usamos la sesión en lugar del JSON
+    if st.session_state.get("demo_mode"):
+        clave_usos = f"demo_{tipo_uso}_usos"
+        usos = st.session_state.get(clave_usos, [])
+        ahora = datetime.now()
+        usos_validos = [u for u in usos if ahora - datetime.fromisoformat(u) < timedelta(hours=1)]
+        
+        if tipo_uso == "modo_pro": limite = LIMITES_MODO_PRO.get("demo", 3)
+        elif tipo_uso == "multipro": limite = LIMITES_MULTIPRO.get("demo", 1)
+        else: limite = 0
+            
+        usos_restantes = limite - len(usos_validos)
+        if registrar and usos_restantes > 0:
+            usos_validos.append(ahora.isoformat())
+            st.session_state[clave_usos] = usos_validos
+            usos_restantes -= 1
+        elif not registrar:
+            st.session_state[clave_usos] = usos_validos
+            
+        return usos_restantes
+
+    # Lógica normal para usuarios registrados
     usuarios = cargar_usuarios()
-    if usuario not in usuarios:
-        return 0
+    if usuario not in usuarios: return 0
     
     clave_usos = f"{tipo_uso}_usos"
     usos = usuarios[usuario].get(clave_usos, [])
@@ -162,16 +287,11 @@ def verificar_y_registrar_uso(usuario, tipo_uso, registrar=False):
     usos_validos = [u for u in usos if ahora - datetime.fromisoformat(u) < timedelta(hours=1)]
     
     tipo = usuarios[usuario].get("tipo", "normal")
-    
-    if tipo_uso == "modo_pro":
-        limite = LIMITES_MODO_PRO.get(tipo, 1)
-    elif tipo_uso == "multipro":
-        limite = LIMITES_MULTIPRO.get(tipo, 0)
-    else:
-        limite = 0
+    if tipo_uso == "modo_pro": limite = LIMITES_MODO_PRO.get(tipo, 1)
+    elif tipo_uso == "multipro": limite = LIMITES_MULTIPRO.get(tipo, 0)
+    else: limite = 0
         
     usos_restantes = limite - len(usos_validos)
-    
     if registrar and usos_restantes > 0:
         usos_validos.append(ahora.isoformat())
         usuarios[usuario][clave_usos] = usos_validos
@@ -185,26 +305,19 @@ def verificar_y_registrar_uso(usuario, tipo_uso, registrar=False):
     return usos_restantes
 
 # --- INICIALIZACIÓN DE SESIÓN ---
-if "autenticado" not in st.session_state:
-    st.session_state.autenticado = False
-if "usuario_actual" not in st.session_state:
-    st.session_state.usuario_actual = None
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-if "last_response" not in st.session_state:
-    st.session_state.last_response = ""
-if "cooldown_hasta" not in st.session_state:
-    st.session_state.cooldown_hasta = None
-if "ban_hasta" not in st.session_state:
-    st.session_state.ban_hasta = None
-if "quemas_activos" not in st.session_state:
-    st.session_state.quemas_activos = ["Hechos 🤍"]
-if "modo_pro_activo" not in st.session_state:
-    st.session_state.modo_pro_activo = False
-if "multipro_activo" not in st.session_state:
-    st.session_state.multipro_activo = False
-if "num_bucles" not in st.session_state:
-    st.session_state.num_bucles = 1
+if "autenticado" not in st.session_state: st.session_state.autenticado = False
+if "usuario_actual" not in st.session_state: st.session_state.usuario_actual = None
+if "messages" not in st.session_state: st.session_state.messages = []
+if "last_response" not in st.session_state: st.session_state.last_response = ""
+if "cooldown_hasta" not in st.session_state: st.session_state.cooldown_hasta = None
+if "ban_hasta" not in st.session_state: st.session_state.ban_hasta = None
+if "quemas_activos" not in st.session_state: st.session_state.quemas_activos = ["Hechos 🤍"]
+if "modo_pro_activo" not in st.session_state: st.session_state.modo_pro_activo = False
+if "multipro_activo" not in st.session_state: st.session_state.multipro_activo = False
+if "num_bucles" not in st.session_state: st.session_state.num_bucles = 1
+if "demo_mode" not in st.session_state: st.session_state.demo_mode = False
+if "demo_start_time" not in st.session_state: st.session_state.demo_start_time = None
+if "demo_email" not in st.session_state: st.session_state.demo_email = ""
 
 def mostrar_titulo_chemita():
     if os.path.exists("chemita.png"):
@@ -221,32 +334,78 @@ if not st.session_state.autenticado:
     mostrar_titulo_chemita()
     with st.container():
         st.markdown('<div class="login-box">', unsafe_allow_html=True)
-        st.subheader("🔒 Iniciar Sesión")
-        usuario_input = st.text_input("Nombre de usuario")
-        password_input = st.text_input("Contraseña", type="password")
         
-        if st.button("Entrar", use_container_width=True):
-            usuarios = cargar_usuarios()
-            if usuario_input in usuarios:
-                bloqueado_hasta_str = usuarios[usuario_input].get("bloqueado_hasta")
-                if bloqueado_hasta_str:
-                    bloqueado_hasta = datetime.fromisoformat(bloqueado_hasta_str)
-                    if datetime.now() < bloqueado_hasta:
-                        tiempo_restante = bloqueado_hasta - datetime.now()
-                        horas = int(tiempo_restante.total_seconds() // 3600)
-                        minutos = int((tiempo_restante.total_seconds() % 3600) // 60)
-                        st.error(f"⏳ ¡Oops! Estás suspendido. Vuelve en {horas}h y {minutos}m.")
-                        st.stop()
-                if usuarios[usuario_input]["password"] == password_input:
+        tab1, tab2 = st.tabs(["👤 Usuario Registrado", "⏳ Acceso Demo (15 min)"])
+        
+        with tab1:
+            st.subheader("🔒 Iniciar Sesión")
+            usuario_input = st.text_input("Nombre de usuario")
+            password_input = st.text_input("Contraseña", type="password")
+            
+            if st.button("Entrar", use_container_width=True):
+                usuarios = cargar_usuarios()
+                if usuario_input in usuarios:
+                    bloqueado_hasta_str = usuarios[usuario_input].get("bloqueado_hasta")
+                    if bloqueado_hasta_str:
+                        bloqueado_hasta = datetime.fromisoformat(bloqueado_hasta_str)
+                        if datetime.now() < bloqueado_hasta:
+                            tiempo_restante = bloqueado_hasta - datetime.now()
+                            horas = int(tiempo_restante.total_seconds() // 3600)
+                            minutos = int((tiempo_restante.total_seconds() % 3600) // 60)
+                            st.error(f"⏳ ¡Oops! Estás suspendido. Vuelve en {horas}h y {minutos}m.")
+                            st.stop()
+                    if usuarios[usuario_input]["password"] == password_input:
+                        st.session_state.autenticado = True
+                        st.session_state.usuario_actual = usuario_input
+                        st.rerun()
+                    else:
+                        st.error("❌ Contraseña incorrecta.")
+                else:
+                    st.error("❌ El usuario no existe.")
+
+        with tab2:
+            st.subheader("🚀 Probar Demo (15 Minutos)")
+            st.write("Ingresa tu nombre y correo para probar Chema IA con todas las funciones desbloqueadas por 15 minutos.")
+            demo_name = st.text_input("Tu nombre")
+            demo_email = st.text_input("Tu correo electrónico")
+            
+            if st.button("Iniciar Demo", use_container_width=True):
+                if demo_name and demo_email:
                     st.session_state.autenticado = True
-                    st.session_state.usuario_actual = usuario_input
+                    st.session_state.usuario_actual = demo_name
+                    st.session_state.demo_mode = True
+                    st.session_state.demo_email = demo_email
+                    st.session_state.demo_start_time = datetime.now()
+                    st.session_state.messages = []
                     st.rerun()
                 else:
-                    st.error("❌ Contraseña incorrecta.")
-            else:
-                st.error("❌ El usuario no existe.")
+                    st.error("Por favor ingresa tu nombre y correo.")
+
         st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
+
+# ==========================================
+# LÓGICA DE DEMO (LÍMITE DE 15 MINUTOS)
+# ==========================================
+if st.session_state.demo_mode:
+    elapsed = datetime.now() - st.session_state.demo_start_time
+    remaining = timedelta(minutes=15) - elapsed
+    
+    if remaining <= timedelta(seconds=0):
+        # Se acabó el tiempo
+        historial = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
+        enviar_correo(f"🕒 Demo Finalizada - {st.session_state.usuario_actual}", f"El usuario {st.session_state.usuario_actual} ({st.session_state.demo_email}) finalizó sus 15 minutos de prueba.\n\nHistorial:\n{historial}")
+        
+        st.session_state.autenticado = False
+        st.session_state.demo_mode = False
+        st.session_state.messages = []
+        st.error("⏳ Tu tiempo de demostración (15 minutos) ha terminado. ¡Gracias por probar Chema IA! Si quieres seguir usándola, pídele a tu maestro una cuenta registrada.")
+        time.sleep(5)
+        st.rerun()
+    else:
+        mins = int(remaining.total_seconds() // 60)
+        secs = int(remaining.total_seconds() % 60)
+        st.warning(f"⏳ **Modo Demo Activo:** Tiempo restante: **{mins}m {secs}s**")
 
 # ==========================================
 # APP PRINCIPAL (CHAT MULTIAGENTE)
@@ -262,15 +421,16 @@ if st.session_state.ban_hasta and datetime.now() < st.session_state.ban_hasta:
 elif st.session_state.ban_hasta:
     st.session_state.ban_hasta = None
 
-col_cerrar1, col_cerrar2, col_cerrar3 = st.columns([2, 1, 1])
+col_cerrar1, col_cerrar2, col_cerrar3 = st.columns([3, 1, 1])
 with col_cerrar3:
     if st.button("🚪 Salir"):
         st.session_state.autenticado = False
         st.session_state.usuario_actual = None
+        st.session_state.demo_mode = False
         st.session_state.messages = []
         st.rerun()
 
-# --- DEFINICIÓN DE LOS AGENTES CHEMA IA (PREPARATORIA) ---
+# --- DEFINICIÓN DE LOS AGENTES CHEMA IA ---
 SOMBREROS = {
     "Hechos 🤍": {
         "api_key_name": "api_key_blanco",
@@ -345,61 +505,65 @@ IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, 
     }
 }
 
-# --- MENÚ DESPLEGABLE MULTIAGENTE ---
-st.markdown("#### 🎩 ¿Con qué agentes de Chema IA quieres pensar ahora?")
-st.markdown("*(El orden en que los selecciones aquí será el orden en que te responderán)*")
-
-quemas_activos = st.multiselect(
-    "Selecciona tus agentes (El orden importa)",
-    options=list(SOMBREROS.keys()),
-    default=st.session_state.quemas_activos,
-    label_visibility="collapsed"
-)
-st.session_state.quemas_activos = quemas_activos
+# --- PANEL DE CONTROL MODERNO ---
+with st.container():
+    st.markdown("#### ⚙️ Panel de Control")
+    st.markdown("*(El orden de selección define el orden de respuesta)*")
+    quemas_activos = st.multiselect(
+        "Selecciona tus agentes",
+        options=list(SOMBREROS.keys()),
+        default=st.session_state.quemas_activos,
+        label_visibility="collapsed"
+    )
+    st.session_state.quemas_activos = quemas_activos
 
 if not quemas_activos:
     st.warning("⚠️ Por favor, selecciona al menos un agente para empezar a chatear.")
     st.stop()
 
-st.info(f"**Orden de respuesta establecido:** {', '.join(quemas_activos)}")
+if len(quemas_activos) == 1:
+    st.info(f"🧑‍🤝‍🧑 **Agente activo:** {quemas_activos[0]}")
+else:
+    st.info(f"🧑‍🤝‍🧑 **Agentes activos:** {', '.join(quemas_activos)}")
 
 # Obtener tipo de usuario para límites
-usuarios_db = cargar_usuarios()
-tipo_usuario_actual = usuarios_db.get(st.session_state.usuario_actual, {}).get("tipo", "normal")
+if st.session_state.get("demo_mode"):
+    tipo_usuario_actual = "demo"
+else:
+    usuarios_db = cargar_usuarios()
+    tipo_usuario_actual = usuarios_db.get(st.session_state.usuario_actual, {}).get("tipo", "normal")
+
 max_bucles = LIMITES_BUCLUES.get(tipo_usuario_actual, 1)
 limite_multipro = LIMITES_MULTIPRO.get(tipo_usuario_actual, 0)
 
-# --- PANEL DE CONTROL: PRO, MULTIPRO Y BUCLUES ---
+# --- BOTONES DE PODER (PRO, MULTIPRO Y BUCLUES) ---
 col_ad1, col_ad2 = st.columns(2)
 
 with col_ad1:
-    # Si solo es 1 agente, mostramos Modo Pro
     if len(quemas_activos) == 1:
         usos_pro = verificar_y_registrar_uso(st.session_state.usuario_actual, "modo_pro")
         if st.session_state.modo_pro_activo:
             st.success("🚀 **MODO PRO ACTIVO.** Resp. ilimitada.")
         else:
             st.info(f"Modo Pro restantes: **{usos_pro}**")
-        if st.button("🚀 Activar Modo Pro", disabled=(usos_pro <= 0 or st.session_state.modo_pro_activo), use_container_width=True):
+        if st.button("🚀 Activar Modo Pro", disabled=(usos_pro <= 0 or st.session_state.modo_pro_activo)):
             st.session_state.modo_pro_activo = True
             st.rerun()
             
-    # Si hay más de 1 agente, mostramos Multiagentes Pro (solo si el usuario tiene permiso)
     elif len(quemas_activos) > 1 and limite_multipro > 0:
         usos_multipro = verificar_y_registrar_uso(st.session_state.usuario_actual, "multipro")
         if st.session_state.multipro_activo:
             st.success("🌟 **MULTIPRO ACTIVO.** Resp. ilimitadas.")
         else:
             st.info(f"MultiPro restantes: **{usos_multipro}**")
-        if st.button("🌟 Activar MultiPro", disabled=(usos_multipro <= 0 or st.session_state.multipro_activo), use_container_width=True):
+        if st.button("🌟 Activar MultiPro", disabled=(usos_multipro <= 0 or st.session_state.multipro_activo)):
             st.session_state.multipro_activo = True
-            st.session_state.num_bucles = 1 # Forzar 1 sola ronda para proteger la API
+            st.session_state.num_bucles = 1
             st.rerun()
     else:
-        st.info("Selecciona agentes para ver opciones.")
+        st.info("Selecciona agentes para ver opciones de poder.")
 
 with col_ad2:
-    # Los bucles solo aparecen si NO hay Modos Pro activos y hay más de 1 agente
     if len(quemas_activos) > 1 and not st.session_state.modo_pro_activo and not st.session_state.multipro_activo:
         if max_bucles > 1:
             st.info(f"Tipo: **{tipo_usuario_actual}** (Máx {max_bucles - 1} bucles)")
@@ -468,10 +632,11 @@ def procesar_respuesta(user_input):
 
     elif estado == "bloqueo":
         st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "🧒"})
-        usuarios = cargar_usuarios()
-        if st.session_state.usuario_actual in usuarios:
-            usuarios[st.session_state.usuario_actual]["bloqueado_hasta"] = (datetime.now() + timedelta(hours=24)).isoformat()
-            guardar_usuarios(usuarios)
+        if not st.session_state.get("demo_mode"):
+            usuarios = cargar_usuarios()
+            if st.session_state.usuario_actual in usuarios:
+                usuarios[st.session_state.usuario_actual]["bloqueado_hasta"] = (datetime.now() + timedelta(hours=24)).isoformat()
+                guardar_usuarios(usuarios)
         
         st.session_state.ban_hasta = datetime.now() + timedelta(hours=24)
         
@@ -516,7 +681,7 @@ def procesar_respuesta(user_input):
                         if es_pro or es_multipro:
                             system_prompt = system_prompt.replace("NUNCA escribas más de DOS párrafos cortos", "NO TIENES LÍMITE DE LONGITUD, redacta una respuesta extensa, profunda y detallada")
                             system_prompt = system_prompt.replace("NUNCA escribas más de cuatro párrafos medios", "NO TIENES LÍMITE DE LONGITUD, redacta una respuesta extensa, profunda y detallada")
-                            max_tokens_api = 800 # Reducido a 800 para proteger la API de bloqueos
+                            max_tokens_api = 800 
                         else:
                             max_tokens_api = 200
 

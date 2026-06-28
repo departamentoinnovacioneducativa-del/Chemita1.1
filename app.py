@@ -146,6 +146,36 @@ def verificar_correo_quincenal(usuario):
             usuarios[usuario]["ultimo_correo"] = datetime.now().isoformat()
             guardar_usuarios(usuarios)
 
+# --- SISTEMA MODO AD LUCEM Y BUCLUES ---
+LIMITES_ADLUCEM = {"lucem": 10, "plus2": 7, "plus1": 5, "max2": 5, "normal": 3}
+LIMITES_BUCLUES = {"lucem": 11, "plus2": 9, "plus1": 7, "max2": 5, "normal": 3}
+
+def verificar_y_registrar_uso_adlucem(usuario, registrar=False):
+    usuarios = cargar_usuarios()
+    if usuario not in usuarios:
+        return 0
+    
+    usos = usuarios[usuario].get("adlucem_usos", [])
+    ahora = datetime.now()
+    usos_validos = [u for u in usos if ahora - datetime.fromisoformat(u) < timedelta(hours=1)]
+    
+    tipo = usuarios[usuario].get("tipo", "normal")
+    limite = LIMITES_ADLUCEM.get(tipo, 3)
+    
+    usos_restantes = limite - len(usos_validos)
+    
+    if registrar and usos_restantes > 0:
+        usos_validos.append(ahora.isoformat())
+        usuarios[usuario]["adlucem_usos"] = usos_validos
+        guardar_usuarios(usuarios)
+        usos_restantes -= 1
+    elif not registrar:
+        if len(usos_validos) != len(usos):
+            usuarios[usuario]["adlucem_usos"] = usos_validos
+            guardar_usuarios(usuarios)
+            
+    return usos_restantes
+
 # --- INICIALIZACIÓN DE SESIÓN ---
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
@@ -161,6 +191,10 @@ if "ban_hasta" not in st.session_state:
     st.session_state.ban_hasta = None
 if "quemas_activos" not in st.session_state:
     st.session_state.quemas_activos = ["Hechos 🤍"]
+if "modo_adlucem_activo" not in st.session_state:
+    st.session_state.modo_adlucem_activo = False
+if "num_bucles" not in st.session_state:
+    st.session_state.num_bucles = 1
 
 def mostrar_titulo_chemita():
     if os.path.exists("chemita.png"):
@@ -275,9 +309,9 @@ IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, 
         "api_key_name": "api_key_azul",
         "prompt": """Eres Chema IA (Organizador). Eres un tutor para estudiantes de preparatoria.
 Tu superpoder es el ORDEN y el CONTROL. 
-Si el estudiante tiene un proyecto grande, lo divides en pasos pequeños, si hay multiagentes lees todas sus opciones y realizas un plan que estructura todas las ideas por puntos lógicos realizables. 
+Si el estudiante tiene un proyecto grande, lo divides en pasos pequeños, si hay multiagentes lees todas sus opciones y realizas un plan que estructura todas las ideas. 
 Le ayudas a hacer listas para entregar tareas a tiempo y estudiar para exámenes.
-Reglas: Eres muy estructurado. debes resumir todas las otras respuestas de los agentes sintéticamente y en un plan realizable, sugiere el siguiente paso. Usa emojis como 🧠📝🔷. Lema: "Un lugar para cada cosa y cada cosa en su lugar".
+Reglas: Eres muy estructurado. NUNCA escribas más de cuatro párrafos medios. Usa emojis como 🧠📝🔷. Lema: "Un lugar para cada cosa y cada cosa en su lugar".
 IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, TÚ DEBES dar tu estructura de organización. Nunca envíes un mensaje vacío."""
     },
     "Psique 🫂": {
@@ -301,9 +335,9 @@ IMPORTANTE: Estás en un chat con otras IAs. Aunque otra IA ya haya respondido, 
     }
 }
 
-# --- MENÚ DESPLEGABLE MULTIAGENTE (RESPETA EL ORDEN DE SELECCIÓN) ---
+# --- MENÚ DESPLEGABLE MULTIAGENTE Y CONFIGURACIÓN DE BUCLUES ---
 st.markdown("#### 🎩 ¿Con qué agentes de Chema IA quieres pensar ahora?")
-st.markdown("*(El orden en que los selecciones aquí será el orden en que te responderán sugerimos terminar con el azul siempre)*")
+st.markdown("*(El orden en que los selecciones aquí será el orden en que te responderán)*")
 
 quemas_activos = st.multiselect(
     "Selecciona tus agentes (El orden importa)",
@@ -318,6 +352,32 @@ if not quemas_activos:
     st.stop()
 
 st.info(f"**Orden de respuesta establecido:** {', '.join(quemas_activos)}")
+
+# Obtener tipo de usuario para límites
+usuarios_db = cargar_usuarios()
+tipo_usuario_actual = usuarios_db.get(st.session_state.usuario_actual, {}).get("tipo", "normal")
+max_bucles = LIMITES_BUCLUES.get(tipo_usuario_actual, 3)
+
+# --- BOTONES MODO AD LUCEM Y RONDAS (BUCLUES) ---
+usos_restantes_adlucem = verificar_y_registrar_uso_adlucem(st.session_state.usuario_actual)
+
+col_ad1, col_ad2 = st.columns(2)
+with col_ad1:
+    if st.session_state.modo_adlucem_activo:
+        st.success("✨ **MODO AD LUCEM ACTIVO.** Próxima resp. ilimitada.")
+    else:
+        st.info(f"Ad Lucem restantes: **{usos_restantes_adlucem}**")
+    if st.button("✨ Activar Ad Lucem", disabled=(usos_restantes_adlucem <= 0 or st.session_state.modo_adlucem_activo), use_container_width=True):
+        st.session_state.modo_adlucem_activo = True
+        st.rerun()
+
+with col_ad2:
+    if len(quemas_activos) > 1:
+        st.info(f"Tipo: **{tipo_usuario_actual}** (Máx {max_bucles})")
+        st.session_state.num_bucles = st.slider("🔁 Bucles (Rondas)", min_value=1, max_value=max_bucles, value=1, step=1)
+    else:
+        st.session_state.num_bucles = 1
+        st.info("Selecciona +1 agente para usar bucles.")
 
 if not st.session_state.messages:
     bienvenida = f"✨ ¡Hola, {st.session_state.usuario_actual}! Somos Chema IA. Tu equipo de tutores de preparatoria. ¡Adelante siempre adelante! ¿En qué te ayudamos a pensar hoy? 😊📚"
@@ -354,7 +414,7 @@ def stream_con_retraso(stream):
     for chunk in stream:
         if chunk.choices[0].delta.content:
             yield chunk.choices[0].delta.content
-            time.sleep(0.11) # Retraso ajustado a 0.11 segundos
+            time.sleep(0.11) 
 
 # --- PROCESAMIENTO DE MENSAJES ---
 def procesar_respuesta(user_input):
@@ -390,78 +450,96 @@ def procesar_respuesta(user_input):
     st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "🧒"})
 
     hablar_en_plural = len(quemas_activos) > 1
+    num_bucles = st.session_state.get("num_bucles", 1)
+    es_adlucem = st.session_state.get("modo_adlucem_activo", False)
+    
+    if es_adlucem:
+        verificar_y_registrar_uso_adlucem(st.session_state.usuario_actual, registrar=True)
+        st.session_state.modo_adlucem_activo = False
 
-    # El bucle respeta el orden de la lista quemas_activos (orden de selección)
-    for agente_key in quemas_activos:
-        config = SOMBREROS[agente_key]
-        
-        # LÓGICA CORREGIDA PARA SEPARAR NOMBRE Y EMOJI
-        partes = agente_key.rsplit(" ", 1)
-        nombre_agente = partes[0]
-        avatar_emoji = partes[1]
-        
-        with st.chat_message("assistant", avatar=avatar_emoji):
-            with st.spinner(f"✨ {nombre_agente} está pensando..."):
-                try:
-                    historial_reciente = st.session_state.messages[-10:]
-                    
-                    system_prompt = config["prompt"]
-                    if hablar_en_plural:
-                        system_prompt += "\n\nNOTA IMPORTANTE: Estás colaborando en un equipo de tutores. Dirígete al estudiante hablando en PLURAL si es necesario (ej: 'Nosotros pensamos', 'El equipo sugiere')."
-                    
-                    mensajes_api = [{"role": "system", "content": system_prompt}]
-                    
-                    for msg in historial_reciente:
-                        if msg["role"] == "assistant" and msg.get("avatar") != avatar_emoji:
-                            mensajes_api.append({"role": "user", "content": f"(Otro agente dijo: {msg['content']})"})
-                        else:
-                            mensajes_api.append({"role": msg["role"], "content": msg["content"]})
-                    
-                    merged_mensajes = [mensajes_api[0]]
-                    for m in mensajes_api[1:]:
-                        if m["role"] == "user" and merged_mensajes[-1]["role"] == "user":
-                            merged_mensajes[-1]["content"] += "\n" + m["content"]
-                        else:
-                            merged_mensajes.append(m)
-                            
-                    if merged_mensajes[-1]["role"] == "assistant":
-                        merged_mensajes.append({"role": "user", "content": f"Ahora te toca a ti, {nombre_agente}. ¡Dime qué opinas!"})
-                    
-                    key_name = config["api_key_name"]
-                    api_key_a_usar = st.secrets["groq"][key_name]
-                    
-                    client = OpenAI(
-                        base_url="https://api.groq.com/openai/v1",
-                        api_key=api_key_a_usar
-                    )
-                    
-                    stream = client.chat.completions.create(
-                        model="llama-3.1-8b-instant",
-                        messages=merged_mensajes,
-                        stream=True,
-                        temperature=0.7,
-                        max_tokens=200
-                    )
-                    response = st.write_stream(stream_con_retraso(stream))
-                    
-                    if not response.strip():
-                        response = f"¡Hola! Soy {nombre_agente}. ¡Estoy listo para ayudarte! 🌟"
+    # --- INICIO DE LOS BUCLES (RONDAS DE DISCUSIÓN) ---
+    for bucle_actual in range(num_bucles):
+        if num_bucles > 1:
+            st.markdown(f"<hr style='margin: 10px 0; border: 1px solid #2ECC71;'><h4 style='text-align:center; color:#2ECC71;'>🔄 Ronda {bucle_actual + 1} de {num_bucles}</h4><hr style='margin: 10px 0; border: 1px solid #2ECC71;'>", unsafe_allow_html=True)
+
+        for agente_key in quemas_activos:
+            config = SOMBREROS[agente_key]
+            partes = agente_key.rsplit(" ", 1)
+            nombre_agente = partes[0]
+            avatar_emoji = partes[1]
+            
+            with st.chat_message("assistant", avatar=avatar_emoji):
+                with st.spinner(f"✨ {nombre_agente} está pensando..."):
+                    try:
+                        historial_reciente = st.session_state.messages[-12:] # Aumentar memoria para que recuerden la ronda anterior
                         
-                    st.session_state.messages.append({"role": "assistant", "content": response, "avatar": avatar_emoji})
-                    st.session_state.last_response = response
-                except Exception as e:
-                    error_msg = str(e).lower()
-                    if "rate limit" in error_msg or "429" in error_msg or "limit" in error_msg:
-                        st.session_state.cooldown_hasta = datetime.now() + timedelta(seconds=40)
-                        msg_enfriamiento = "🌿 Respira, analiza nuestra comunicación... Muchos amigos están hablando conmigo ahora mismo. ¡Inténtalo de nuevo en 40 segundos!"
-                        st.warning(msg_enfriamiento)
-                        st.session_state.messages.append({"role": "assistant", "content": msg_enfriamiento, "avatar": "⏳"})
-                        st.rerun()
-                    else:
-                        error_text = f"Ups... {nombre_agente} se distrajo. ¡Intenta de nuevo!"
-                        st.error(error_text)
-                        st.session_state.messages.append({"role": "assistant", "content": error_text, "avatar": avatar_emoji})
-                        continue 
+                        system_prompt = config["prompt"]
+                        if es_adlucem:
+                            system_prompt = system_prompt.replace("NUNCA escribas más de DOS párrafos cortos", "NO TIENES LÍMITE DE LONGITUD, redacta una respuesta extensa, profunda y detallada")
+                            system_prompt = system_prompt.replace("NUNCA escribas más de cuatro párrafos medios", "NO TIENES LÍMITE DE LONGITUD, redacta una respuesta extensa, profunda y detallada")
+                            max_tokens_api = 4000
+                        else:
+                            max_tokens_api = 200
+
+                        if hablar_en_plural:
+                            system_prompt += "\n\nNOTA IMPORTANTE: Estás colaborando en un equipo de tutores. Dirígete al estudiante hablando en PLURAL si es necesario (ej: 'Nosotros pensamos', 'El equipo sugiere')."
+                        
+                        mensajes_api = [{"role": "system", "content": system_prompt}]
+                        
+                        for msg in historial_reciente:
+                            if msg["role"] == "assistant" and msg.get("avatar") != avatar_emoji:
+                                mensajes_api.append({"role": "user", "content": f"(Otro agente dijo: {msg['content']})"})
+                            else:
+                                mensajes_api.append({"role": msg["role"], "content": msg["content"]})
+                        
+                        merged_mensajes = [mensajes_api[0]]
+                        for m in mensajes_api[1:]:
+                            if m["role"] == "user" and merged_mensajes[-1]["role"] == "user":
+                                merged_mensajes[-1]["content"] += "\n" + m["content"]
+                            else:
+                                merged_mensajes.append(m)
+                                
+                        # Si es la segunda ronda o más, inyectar instrucción para refinar
+                        if bucle_actual > 0 and merged_mensajes[-1]["role"] == "assistant":
+                            merged_mensajes.append({"role": "user", "content": f"Comienza la Ronda {bucle_actual + 1}. Revisa lo que se ha dicho hasta ahora, refina tu postura, corrige si es necesario o aporta algo nuevo sin repetir."})
+                        elif merged_mensajes[-1]["role"] == "assistant":
+                            merged_mensajes.append({"role": "user", "content": f"Ahora te toca a ti, {nombre_agente}. ¡Dime qué opinas!"})
+                        
+                        key_name = config["api_key_name"]
+                        api_key_a_usar = st.secrets["groq"][key_name]
+                        
+                        client = OpenAI(
+                            base_url="https://api.groq.com/openai/v1",
+                            api_key=api_key_a_usar
+                        )
+                        
+                        stream = client.chat.completions.create(
+                            model="llama-3.1-8b-instant",
+                            messages=merged_mensajes,
+                            stream=True,
+                            temperature=0.7,
+                            max_tokens=max_tokens_api
+                        )
+                        response = st.write_stream(stream_con_retraso(stream))
+                        
+                        if not response.strip():
+                            response = f"¡Hola! Soy {nombre_agente}. ¡Estoy listo para ayudarte! 🌟"
+                            
+                        st.session_state.messages.append({"role": "assistant", "content": response, "avatar": avatar_emoji})
+                        st.session_state.last_response = response
+                    except Exception as e:
+                        error_msg = str(e).lower()
+                        if "rate limit" in error_msg or "429" in error_msg or "limit" in error_msg:
+                            st.session_state.cooldown_hasta = datetime.now() + timedelta(seconds=40)
+                            msg_enfriamiento = "🌿 Respira, analiza nuestra comunicación... Muchos amigos están hablando conmigo ahora mismo. ¡Inténtalo de nuevo en 40 segundos!"
+                            st.warning(msg_enfriamiento)
+                            st.session_state.messages.append({"role": "assistant", "content": msg_enfriamiento, "avatar": "⏳"})
+                            st.rerun()
+                        else:
+                            error_text = f"Ups... {nombre_agente} se distrajo. ¡Intenta de nuevo!"
+                            st.error(error_text)
+                            st.session_state.messages.append({"role": "assistant", "content": error_text, "avatar": avatar_emoji})
+                            continue 
 
     verificar_correo_quincenal(st.session_state.usuario_actual)
 

@@ -1,58 +1,58 @@
 {
-  "lucem1": {
-    "password": "1234e",
-    "tipo": "lucem",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null,
-    "adlucem_usos": []
-  },
-  "lucem2": {
-    "password": "1234e",
-    "tipo": "lucem",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null,
-    "adlucem_usos": []
-  },
-  "plus21": {
-    "password": "1234e",
-    "tipo": "plus2",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null,
-    "adlucem_usos": []
-  },
-  "plus22": {
-    "password": "1234e",
-    "tipo": "plus2",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null,
-    "adlucem_usos": []
-  },
-  "plus11": {
-    "password": "1234e",
-    "tipo": "plus1",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null,
-    "adlucem_usos": []
-  },
-  "plus12": {
-    "password": "1234e",
-    "tipo": "plus1",
-    "bloqueado_hasta": null,
-    "ultimo_correo": null,
-    "adlucem_usos": []
-  },
   "normal1": {
     "password": "1234e",
     "tipo": "normal",
     "bloqueado_hasta": null,
     "ultimo_correo": null,
-    "adlucem_usos": []
+    "modo_pro_usos": []
   },
   "normal2": {
     "password": "1234e",
     "tipo": "normal",
     "bloqueado_hasta": null,
     "ultimo_correo": null,
-    "adlucem_usos": []
+    "modo_pro_usos": []
+  },
+  "lucem11": {
+    "password": "1234e",
+    "tipo": "lucem1",
+    "bloqueado_hasta": null,
+    "ultimo_correo": null,
+    "modo_pro_usos": []
+  },
+  "lucem12": {
+    "password": "1234e",
+    "tipo": "lucem1",
+    "bloqueado_hasta": null,
+    "ultimo_correo": null,
+    "modo_pro_usos": []
+  },
+  "lucem21": {
+    "password": "1234e",
+    "tipo": "lucem2",
+    "bloqueado_hasta": null,
+    "ultimo_correo": null,
+    "modo_pro_usos": []
+  },
+  "lucem22": {
+    "password": "1234e",
+    "tipo": "lucem2",
+    "bloqueado_hasta": null,
+    "ultimo_correo": null,
+    "modo_pro_usos": []
+  },
+  "adlucem1": {
+    "password": "1234e",
+    "tipo": "adlucem",
+    "bloqueado_hasta": null,
+    "ultimo_correo": null,
+    "modo_pro_usos": []
+  },
+  "adlucem2": {
+    "password": "1234e",
+    "tipo": "adlucem",
+    "bloqueado_hasta": null,
+    "ultimo_correo": null,
+    "modo_pro_usos": []
   }
 }

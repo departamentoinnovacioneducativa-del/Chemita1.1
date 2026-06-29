@@ -201,6 +201,111 @@ css_base = """
 """
 st.markdown(css_base, unsafe_allow_html=True)
 
+# --- INYECCIÓN DE CÓDIGO KONAMI CON FLECHAS (JAVASCRIPT) ---
+ascii_art_str = '''⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡤⠦⢤⣠⠖⠶⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⢠⠏⢀⠤⠤⣽⣤⠚⠺⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⢸⢠⠋⠀⠀⠈⢇⢀⠀⢸⣄⣠⣤⣤⣀⡀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⢀⣤⠟⡞⠀⣴⣆⠀⢸⠿⠓⠉⠁⠀⠀⣀⡈⢉⡳⣄⠀⠀
+⠀⠀⠀⠀⠀⢸⠁⣸⠀⠰⠄⣹⣏⠜⠁⠀⠀⠀⠀⠀⠀⠁⠈⠀⠂⠈⢷⠀
+⠀⠀⠀⠀⠀⠘⡞⣁⡠⠄⣀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⡇
+⠀⠀⠀⠀⣠⢺⠋⠀⠀⠀⠀⠁⢢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡇
+⠀⠀⠀⢰⡇⢸⡀⠀⠀⠀⠀⠀⠀⠱⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⠇
+⠀⠀⠀⠀⠙⢮⣧⠀⠀⠀⠀⠀⠀⠀⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⠟⠀
+⠀⠀⠀⠀⠀⠀⢸⣷⣄⠀⠀⠀⠀⠜⠳⢄⡀⠀⠀⠀⠀⠀⢀⣤⠞⠁⠀⠀
+⠀⠀⠀⠀⠀⠀⠈⢧⣈⣳⣦⣀⡀⠀⠀⠀⠈⢉⣻⠖⠛⠉⠉⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⣀⡤⠤⠤⣤⠄⣾⠈⠡⡀⠀⠹⡍⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⡼⠁⠀⠀⣰⡥⠚⠉⠀⠀⠁⠀⠀⠈⢆⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⢠⡇⠀⢠⠖⠉⠀⠀⠀⡀⠀⢸⠀⠀⠀⠈⣆⠀⠀⠀⠀⠀⠀⠀⠀
+⢰⠛⠲⡏⢧⣠⡏⠀⠀⢠⠴⠋⠁⠀⡈⠀⠀⠀⠀⠸⡤⠤⡀⠀⠀⠀⠀⠀
+⢸⠀⠀⠳⠤⠤⠷⡄⠀⠈⠧⠐⠊⠉⢳⡀⠀⠀⠀⠀⡇⠀⢸⣂⡄⠀⠀⠀
+⠈⣇⠀⠀⠀⠀⠀⠈⢳⠄⠀⠀⠀⠀⠙⢧⡀⠀⠀⠀⡷⢤⡞⠀⣼⠀⠀⠀
+⠀⠹⣦⣀⡆⠀⠀⠀⢸⠀⠀⠀⠀⠀⠀⣠⠇⠀⠀⣼⠷⣄⣈⡽⠁⠀⠀⠀
+⠀⠀⠘⢾⡇⠀⠀⠀⠈⢧⡀⠀⠀⢀⣠⠇⠀⢀⣼⠛⠲⠶⠋⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⢻⠀⠀⠀⠀⠀⢹⠓⠒⠋⣀⣠⠶⠋⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⣴⠛⣆⣀⡀⠀⢠⣿⣟⡟⣏⡉⠀⣀⣠⠏⢳⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠙⣄⠀⠈⠉⠉⠉⢀⡿⣧⣄⠉⠉⠉⣀⡠⠜⠒⠒⠲⢦⡀⠀⠀⠀
+⠀⢀⡴⠊⠉⠉⠉⠐⠂⠈⢻⣰⠇⠀⠀⠀⠀⠉⠀⠀⠀⠀⠀⠈⢷⠀⠀⠀
+⠀⡟⠀⠀⠀⠀⠀⠀⠀⠀⠈⣿⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⠀⠀⠀
+⠀⣇⠀⠀⠀⠀⠀⠀⠀⠀⢀⡇⢿⡒⠠⢤⠤⠤⣤⡤⠤⠤⠤⣾⠁⠀⠀⠀
+⠀⠘⡷⠤⣀⣀⣀⣀⠠⠔⣺⠃⠀⠉⠙⠊⠙⠒⠒⠒⠒⠒⠚⠁⠀⠀⠀⠀
+⠀⠀⠉⠓⠒⠦⠶⠖⠒⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀'''
+
+konami_js = f"""
+<script>
+    if (!window.parent.konamiSetup) {{
+        window.parent.konamiSetup = true;
+        let konami = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'KeyB', 'KeyA'];
+        let pos = 0;
+        let parentDoc = window.parent.document;
+        
+        parentDoc.addEventListener('keydown', function(e) {{
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            if (e.code === konami[pos]) {{
+                pos++;
+                if (pos === konami.length) {{
+                    pos = 0;
+                    showEgg();
+                }}
+            }} else {{
+                pos = (e.code === konami[0]) ? 1 : 0;
+            }}
+        }});
+
+        function showEgg() {{
+            if (parentDoc.getElementById('konami-egg-popup')) return;
+            let eggDiv = parentDoc.createElement('div');
+            eggDiv.id = 'konami-egg-popup';
+            eggDiv.style.position = 'fixed';
+            eggDiv.style.top = '50%';
+            eggDiv.style.left = '50%';
+            eggDiv.style.transform = 'translate(-50%, -50%)';
+            eggDiv.style.background = '#001F3F';
+            eggDiv.style.border = '3px solid #2ECC71';
+            eggDiv.style.borderRadius = '15px';
+            eggDiv.style.padding = '30px';
+            eggDiv.style.zIndex = '99999';
+            eggDiv.style.boxShadow = '0 10px 30px rgba(0,0,0,0.8)';
+            eggDiv.style.maxWidth = '90%';
+            eggDiv.style.textAlign = 'center';
+            eggDiv.style.fontFamily = 'Poppins, sans-serif';
+            
+            let h3 = parentDoc.createElement('h3');
+            h3.innerText = '✨ Esta aplicación fue hecha por Pablo Adrian Rivera Juvenal el Profe Adrian ✨';
+            h3.style.color = '#2ECC71';
+            eggDiv.appendChild(h3);
+            
+            let p = parentDoc.createElement('p');
+            p.innerText = 'Si no sabes quién es, déjame decirte que:';
+            p.style.color = '#FFFFFF';
+            eggDiv.appendChild(p);
+            
+            let pre = parentDoc.createElement('pre');
+            pre.innerText = `{ascii_art_str}`;
+            pre.style.color = '#2ECC71';
+            pre.style.fontSize = '8px';
+            pre.style.overflowX = 'auto';
+            pre.style.textAlign = 'left';
+            eggDiv.appendChild(pre);
+            
+            let btn = parentDoc.createElement('button');
+            btn.innerText = 'Cerrar';
+            btn.style.background = '#2ECC71';
+            btn.style.color = 'white';
+            btn.style.border = 'none';
+            btn.style.padding = '10px 20px';
+            btn.style.borderRadius = '10px';
+            btn.style.cursor = 'pointer';
+            btn.style.marginTop = '15px';
+            btn.onclick = function() {{ parentDoc.body.removeChild(eggDiv); }};
+            eggDiv.appendChild(btn);
+            
+            parentDoc.body.appendChild(eggDiv);
+        }}
+    }}
+</script>
+"""
+components.html(konami_js, height=0)
+
 # --- GESTIÓN DE BASE DE DATOS JSON ---
 DB_FILE = "usuarios.json"
 
@@ -639,25 +744,44 @@ def stream_con_retraso(stream):
 
 # --- PROCESAMIENTO DE MENSAJES ---
 def procesar_respuesta(user_input):
-    # 🥚 EASTER EGG SECRETO
-    codigo_secreto = "arriba abajo arriba abajo abab"
+    # 🥚 EASTER EGG: CÓDIGO KONAMI EN TEXTO
+    codigo_secreto = "arriba arriba abajo abajo izquierda derecha izquierda derecha b a"
     if user_input.strip().lower() == codigo_secreto:
         st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "🧒"})
         with st.chat_message("user", avatar="🧒"):
             st.markdown(user_input)
             
         egg_ascii = '''```
-      _.-"""""-._
-    .'           '.
-   /               \\
-  |                 |
-  |                 |
-  |                 |
-   \\               /
-    '._         _.'
-       `"""""""`
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡤⠦⢤⣠⠖⠶⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⢠⠏⢀⠤⠤⣽⣤⠚⠺⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⢸⢠⠋⠀⠀⠈⢇⢀⠀⢸⣄⣠⣤⣤⣀⡀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⢀⣤⠟⡞⠀⣴⣆⠀⢸⠿⠓⠉⠁⠀⠀⣀⡈⢉⡳⣄⠀⠀
+⠀⠀⠀⠀⠀⢸⠁⣸⠀⠰⠄⣹⣏⠜⠁⠀⠀⠀⠀⠀⠀⠁⠈⠀⠂⠈⢷⠀
+⠀⠀⠀⠀⠀⠘⡞⣁⡠⠄⣀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⡇
+⠀⠀⠀⠀⣠⢺⠋⠀⠀⠀⠀⠁⢢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡇
+⠀⠀⠀⢰⡇⢸⡀⠀⠀⠀⠀⠀⠀⠱⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⠇
+⠀⠀⠀⠀⠙⢮⣧⠀⠀⠀⠀⠀⠀⠀⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⠟⠀
+⠀⠀⠀⠀⠀⠀⢸⣷⣄⠀⠀⠀⠀⠜⠳⢄⡀⠀⠀⠀⠀⠀⢀⣤⠞⠁⠀⠀
+⠀⠀⠀⠀⠀⠀⠈⢧⣈⣳⣦⣀⡀⠀⠀⠀⠈⢉⣻⠖⠛⠉⠉⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⣀⡤⠤⠤⣤⠄⣾⠈⠡⡀⠀⠹⡍⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⡼⠁⠀⠀⣰⡥⠚⠉⠀⠀⠁⠀⠀⠈⢆⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⢠⡇⠀⢠⠖⠉⠀⠀⠀⡀⠀⢸⠀⠀⠀⠈⣆⠀⠀⠀⠀⠀⠀⠀⠀
+⢰⠛⠲⡏⢧⣠⡏⠀⠀⢠⠴⠋⠁⠀⡈⠀⠀⠀⠀⠸⡤⠤⡀⠀⠀⠀⠀⠀
+⢸⠀⠀⠳⠤⠤⠷⡄⠀⠈⠧⠐⠊⠉⢳⡀⠀⠀⠀⠀⡇⠀⢸⣂⡄⠀⠀⠀
+⠈⣇⠀⠀⠀⠀⠀⠈⢳⠄⠀⠀⠀⠀⠙⢧⡀⠀⠀⠀⡷⢤⡞⠀⣼⠀⠀⠀
+⠀⠹⣦⣀⡆⠀⠀⠀⢸⠀⠀⠀⠀⠀⠀⣠⠇⠀⠀⣼⠷⣄⣈⡽⠁⠀⠀⠀
+⠀⠀⠘⢾⡇⠀⠀⠀⠈⢧⡀⠀⠀⢀⣠⠇⠀⢀⣼⠛⠲⠶⠋⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⢻⠀⠀⠀⠀⠀⢹⠓⠒⠋⣀⣠⠶⠋⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⣴⠛⣆⣀⡀⠀⢠⣿⣟⡟⣏⡉⠀⣀⣠⠏⢳⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠙⣄⠀⠈⠉⠉⠉⢀⡿⣧⣄⠉⠉⠉⣀⡠⠜⠒⠒⠲⢦⡀⠀⠀⠀
+⠀⢀⡴⠊⠉⠉⠉⠐⠂⠈⢻⣰⠇⠀⠀⠀⠀⠉⠀⠀⠀⠀⠀⠈⢷⠀⠀⠀
+⠀⡟⠀⠀⠀⠀⠀⠀⠀⠀⠈⣿⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⠀⠀⠀
+⠀⣇⠀⠀⠀⠀⠀⠀⠀⠀⢀⡇⢿⡒⠠⢤⠤⠤⣤⡤⠤⠤⠤⣾⠁⠀⠀⠀
+⠀⠘⡷⠤⣀⣀⣀⣀⠠⠔⣺⠃⠀⠉⠙⠊⠙⠒⠒⠒⠒⠒⠚⠁⠀⠀⠀⠀
+⠀⠀⠉⠓⠒⠦⠶⠖⠒⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ```'''
-        msg_easter = "✨ **¡Descubriste un secreto!** ✨\n\nEsta aplicación fue hecha por **Pablo Adrian Rivera Juvenal**, el Profe Adrian. 🧑‍🏫\n\n" + egg_ascii
+        msg_easter = "✨ **Esta aplicación fue hecha por Pablo Adrian Rivera Juvenal el Profe Adrian** ✨\n\nSi no sabes quién es, déjame decirte que:\n\n" + egg_ascii
+        
         with st.chat_message("assistant", avatar="🥚"):
             st.markdown(msg_easter)
             

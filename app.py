@@ -1,3 +1,4 @@
+# MARK 4 - Chema IA
 import streamlit as st
 from openai import OpenAI
 import streamlit.components.v1 as components
@@ -34,7 +35,6 @@ css_base = """
         padding: 20px 10px;
     }
 
-    /* Marco principal */
     .stApp > div {
         background: rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(10px);
@@ -46,13 +46,11 @@ css_base = """
         padding: 25px;
     }
 
-    /* --- TEXTO AMARILLO CON CONTORNO NEGRO EN FONDO AZUL --- */
     .stApp p, .stApp span, .stApp label, .stApp li, .stApp h4, .stApp h5 {
         color: #FFE484 !important;
         text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
     }
     
-    /* Excepciones para que el texto en fondos blancos siga siendo oscuro */
     [data-testid="stChatMessage"], [data-testid="stChatMessage"] p, [data-testid="stChatMessage"] span, [data-testid="stChatMessage"] li {
         color: #333 !important;
         text-shadow: none !important;
@@ -74,7 +72,6 @@ css_base = """
         text-shadow: none !important;
     }
 
-    /* Banner e imágenes */
     div[data-testid="stImageContainer"] { margin: 0 0 20px 0 !important; padding: 0 !important; border-radius: 15px; overflow: hidden; }
     div[data-testid="stImageContainer"] img {
         width: 100% !important; height: auto !important; max-height: 220px; 
@@ -82,7 +79,6 @@ css_base = """
         box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
 
-    /* Burbujas de chat */
     [data-testid="stChatMessage"] {
         background: rgba(255, 255, 255, 0.95) !important;
         border-radius: 15px;
@@ -98,7 +94,6 @@ css_base = """
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Entrada de texto */
     [data-testid="stChatInput"] { background: transparent !important; padding-bottom: 10px; margin-top: 15px; }
     [data-testid="stChatInput"] > div {
         border-radius: 25px;
@@ -109,7 +104,6 @@ css_base = """
     }
     [data-testid="stChatInputSubmit"] { color: #2ECC71 !important; font-size: 1.2em; }
 
-    /* Títulos */
     .custom-title-chemita {
         text-align: center; color: #2ECC71; 
         font-size: clamp(2em, 6vw, 3.2em); 
@@ -123,7 +117,6 @@ css_base = """
         text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
     }
 
-    /* Botones */
     .stButton button {
         background: linear-gradient(45deg, #2ECC71, #27AE60) !important;
         color: white !important; font-weight: 600;
@@ -141,7 +134,6 @@ css_base = """
         background: #555 !important; color: #aaa !important; cursor: not-allowed; box-shadow: none; transform: none;
     }
 
-    /* Login Box */
     .login-box {
         background: rgba(255, 255, 255, 0.15);
         backdrop-filter: blur(10px);
@@ -157,7 +149,6 @@ css_base = """
         border-radius: 10px !important;
     }
 
-    /* Panel de control */
     [data-testid="stVerticalBlockBorderWrapper"] {
         background: rgba(255, 255, 255, 0.1);
         border: 1px solid rgba(46, 204, 113, 0.2);
@@ -172,30 +163,13 @@ css_base = """
         border-radius: 10px !important;
     }
 
-    /* --- RESPONSIVIDAD MÓVIL --- */
     @media (max-width: 768px) {
-        .stApp {
-            padding: 10px 5px;
-        }
-        .stApp > div {
-            padding: 15px 10px;
-            border-width: 2px;
-        }
-        .login-box {
-            padding: 20px;
-            margin: 10px auto;
-        }
-        [data-testid="stChatMessage"] {
-            padding: 10px 15px;
-            margin: 8px 0;
-        }
-        [data-testid="stHorizontalBlock"] {
-            gap: 5px;
-        }
-        [data-testid="stHorizontalBlock"] > div {
-            width: 100% !important;
-            flex: none !important;
-        }
+        .stApp { padding: 10px 5px; }
+        .stApp > div { padding: 15px 10px; border-width: 2px; }
+        .login-box { padding: 20px; margin: 10px auto; }
+        [data-testid="stChatMessage"] { padding: 10px 15px; margin: 8px 0; }
+        [data-testid="stHorizontalBlock"] { gap: 5px; }
+        [data-testid="stHorizontalBlock"] > div { width: 100% !important; flex: none !important; }
     }
 </style>
 """
@@ -380,7 +354,8 @@ def verificar_correo_quincenal(usuario):
 # --- SISTEMA DE LÍMITES (PRO, MULTIPRO Y BUCLUES) ---
 LIMITES_MODO_PRO = {"adlucem": 4, "lucem2": 3, "lucem1": 2, "normal": 1, "demo": 3}
 LIMITES_MULTIPRO = {"adlucem": 1, "lucem2": 1, "lucem1": 0, "normal": 0, "demo": 1}
-LIMITES_BUCLUES = {"adlucem": 5, "lucem2": 3, "lucem1": 2, "normal": 1, "demo": 3} 
+# CAMBIO MARK 4: Adlucem máximo 4 bucles
+LIMITES_BUCLUES = {"adlucem": 4, "lucem2": 3, "lucem1": 2, "normal": 1, "demo": 3} 
 
 def verificar_y_registrar_uso(usuario, tipo_uso, registrar=False):
     if st.session_state.get("demo_mode"):
@@ -443,6 +418,8 @@ if "num_bucles" not in st.session_state: st.session_state.num_bucles = 1
 if "demo_mode" not in st.session_state: st.session_state.demo_mode = False
 if "demo_start_time" not in st.session_state: st.session_state.demo_start_time = None
 if "demo_email" not in st.session_state: st.session_state.demo_email = ""
+# NUEVO MARK 4: Estado para Respuesta Paralela
+if "respuesta_paralela" not in st.session_state: st.session_state.respuesta_paralela = False
 
 def mostrar_titulo_chemita():
     if os.path.exists("chemita.png"):
@@ -613,10 +590,12 @@ REGLA ESTRICTA: Sé EXTREMADAMENTE BREVE. Máximo 3 oraciones. Ve directo al gra
 with st.container():
     st.markdown("#### ⚙️ Panel de Control")
     st.markdown("*(El orden de selección define el orden de respuesta)*")
+    # CAMBIO MARK 4: Máximo 3 agentes
     quemas_activos = st.multiselect(
         "Selecciona tus agentes",
         options=list(SOMBREROS.keys()),
         default=st.session_state.quemas_activos,
+        max_selections=3,
         label_visibility="collapsed"
     )
     st.session_state.quemas_activos = quemas_activos
@@ -640,10 +619,20 @@ else:
 max_bucles = LIMITES_BUCLUES.get(tipo_usuario_actual, 1)
 limite_multipro = LIMITES_MULTIPRO.get(tipo_usuario_actual, 0)
 
-# --- BOTONES DE PODER (PRO, MULTIPRO Y BUCLUES) ---
-col_ad1, col_ad2 = st.columns(2)
+# --- NUEVA FUNCIÓN MARK 4: RESPUESTA PARALELA ---
+st.markdown("---")
+col_par1, col_par2 = st.columns([1, 1])
+with col_par1:
+    if len(quemas_activos) > 1:
+        paralela_disabled = st.session_state.modo_pro_activo or st.session_state.multipro_activo
+        st.session_state.respuesta_paralela = st.checkbox("⚡ Respuesta Paralela", value=st.session_state.respuesta_paralela, disabled=paralela_disabled, help="Las IAs responderán la misma pregunta al mismo tiempo, sin ver lo que las demás dijeron.")
+        if paralela_disabled:
+            st.session_state.respuesta_paralela = False
+    else:
+        st.session_state.respuesta_paralela = False
 
-with col_ad1:
+# --- BOTONES DE PODER (PRO, MULTIPRO Y BUCLUES) ---
+with col_par2:
     if len(quemas_activos) == 1:
         usos_pro = verificar_y_registrar_uso(st.session_state.usuario_actual, "modo_pro")
         if st.session_state.modo_pro_activo:
@@ -667,7 +656,11 @@ with col_ad1:
     else:
         st.info("Selecciona agentes para ver opciones de poder.")
 
-with col_ad2:
+# Control de Bucles
+if st.session_state.respuesta_paralela:
+    st.session_state.num_bucles = 1
+    st.info("🔁 Bucles desactivados (Modo Paralelo activo).")
+else:
     if len(quemas_activos) > 1 and not st.session_state.modo_pro_activo and not st.session_state.multipro_activo:
         if max_bucles > 1:
             st.info(f"Tipo: **{tipo_usuario_actual}** (Máx {max_bucles - 1} bucles)")
@@ -681,6 +674,8 @@ with col_ad2:
             st.info("Bucles requieren +1 agente.")
         else:
             st.info("Bucles desactivados (Pro activo).")
+
+st.markdown("---")
 
 if not st.session_state.messages:
     bienvenida = f"✨ ¡Hola, {st.session_state.usuario_actual}! Somos Chema IA. Tu equipo de tutores de preparatoria. ¡Adelante siempre adelante! ¿En qué te ayudamos a pensar hoy? 😊📚"
@@ -802,6 +797,7 @@ def procesar_respuesta(user_input):
     num_bucles = st.session_state.get("num_bucles", 1)
     es_pro = st.session_state.get("modo_pro_activo", False)
     es_multipro = st.session_state.get("multipro_activo", False)
+    es_paralela = st.session_state.get("respuesta_paralela", False)
     
     if es_pro:
         verificar_y_registrar_uso(st.session_state.usuario_actual, "modo_pro", registrar=True)
@@ -810,11 +806,12 @@ def procesar_respuesta(user_input):
         verificar_y_registrar_uso(st.session_state.usuario_actual, "multipro", registrar=True)
         st.session_state.multipro_activo = False
 
-    # --- INICIO DE LOS BUCLES (RONDAS DE DISCUSIÓN) ---
-    for bucle_actual in range(num_bucles):
-        if num_bucles > 1:
-            st.markdown(f"<hr style='margin: 10px 0; border: 1px solid #2ECC71;'><h4 style='text-align:center; color:#2ECC71;'>🔄 Ronda {bucle_actual + 1} de {num_bucles}</h4><hr style='margin: 10px 0; border: 1px solid #2ECC71;'>", unsafe_allow_html=True)
-
+    # --- INICIO DE RESPUESTAS (NORMALES, BUCLES O PARALELAS) ---
+    
+    # MODO RESPUESTA PARALELA
+    if es_paralela and len(quemas_activos) > 1:
+        st.markdown(f"<h4 style='text-align:center; color:#2ECC71;'>⚡ Respuestas Paralelas</h4>", unsafe_allow_html=True)
+        
         for i, agente_key in enumerate(quemas_activos):
             config = SOMBREROS[agente_key]
             partes = agente_key.rsplit(" ", 1)
@@ -822,21 +819,11 @@ def procesar_respuesta(user_input):
             avatar_emoji = partes[1]
             
             with st.chat_message("assistant", avatar=avatar_emoji):
-                with st.spinner(f"✨ {nombre_agente} está pensando..."):
+                with st.spinner(f"⚡ {nombre_agente} está procesando..."):
                     try:
                         historial_reciente = st.session_state.messages[-12:] 
                         
                         system_prompt = config["prompt"]
-                        
-                        # LÓGICA DE INTRODUCCIONES Y BUCLES
-                        if i == 0 and bucle_actual == 0:
-                            system_prompt += "\n\nNOTA: Eres el primer agente en responder. Puedes hacer un saludo MUY breve (ej: '¡Hola!') y luego dar tu respuesta directo al grano."
-                        else:
-                            system_prompt += "\n\nNOTA CRÍTICA: Ya hubo respuestas previas. NO saludes, NO te presentes y NO repitas lo que ya se dijo. Ve directo a tu punto principal."
-                            
-                        if bucle_actual > 0:
-                            system_prompt += "\nEstamos en una ronda de refinamiento. Revisa lo que se ha dicho, refina tu postura o aporta algo nuevo MUY brevemente sin repetir."
-
                         if es_pro or es_multipro:
                             system_prompt = system_prompt.replace("Sé EXTREMADAMENTE BREVE. Máximo 3 oraciones.", "NO TIENES LÍMITE DE LONGITUD, redacta una respuesta extensa, profunda y detallada.")
                             system_prompt = system_prompt.replace("Sé EXTREMADAMENTE BREVE. Máximo 4 oraciones.", "NO TIENES LÍMITE DE LONGITUD, redacta una respuesta extensa, profunda y detallada.")
@@ -844,26 +831,14 @@ def procesar_respuesta(user_input):
                         else:
                             max_tokens_api = 200
 
-                        if hablar_en_plural:
-                            system_prompt += "\nHabla en PLURAL si es necesario (ej: 'Nosotros pensamos')."
-                        
+                        # En paralela, no ven lo que otros dicen. Solo system + historial (sin la nota de otros agentes)
                         mensajes_api = [{"role": "system", "content": system_prompt}]
-                        
                         for msg in historial_reciente:
-                            if msg["role"] == "assistant" and msg.get("avatar") != avatar_emoji:
-                                mensajes_api.append({"role": "user", "content": f"(Otro agente dijo: {msg['content']})"})
-                            else:
-                                mensajes_api.append({"role": msg["role"], "content": msg["content"]})
-                        
-                        merged_mensajes = [mensajes_api[0]]
-                        for m in mensajes_api[1:]:
-                            if m["role"] == "user" and merged_mensajes[-1]["role"] == "user":
-                                merged_mensajes[-1]["content"] += "\n" + m["content"]
-                            else:
-                                merged_mensajes.append(m)
-                                
-                        if merged_mensajes[-1]["role"] == "assistant":
-                            merged_mensajes.append({"role": "user", "content": f"Ahora te toca a ti, {nombre_agente}. ¡Dime qué opinas!"})
+                            mensajes_api.append({"role": msg["role"], "content": msg["content"]})
+                            
+                        # Asegurar que el último sea el user
+                        if mensajes_api[-1]["role"] == "assistant":
+                            mensajes_api.append({"role": "user", "content": f"Ahora te toca a ti, {nombre_agente}. ¡Dime qué opinas!"})
                         
                         key_name = config["api_key_name"]
                         api_key_a_usar = st.secrets["groq"][key_name]
@@ -875,7 +850,7 @@ def procesar_respuesta(user_input):
                         
                         stream = client.chat.completions.create(
                             model="llama-3.1-8b-instant",
-                            messages=merged_mensajes,
+                            messages=mensajes_api,
                             stream=True,
                             temperature=0.7,
                             max_tokens=max_tokens_api
@@ -887,6 +862,11 @@ def procesar_respuesta(user_input):
                             
                         st.session_state.messages.append({"role": "assistant", "content": response, "avatar": avatar_emoji})
                         st.session_state.last_response = response
+                        
+                        # Pausa de 2 segundos entre agentes paralelos para no saturar la API
+                        if i < len(quemas_activos) - 1:
+                            time.sleep(2)
+                            
                     except Exception as e:
                         error_msg = str(e).lower()
                         if "rate limit" in error_msg or "429" in error_msg or "limit" in error_msg:
@@ -900,6 +880,97 @@ def procesar_respuesta(user_input):
                             st.error(error_text)
                             st.session_state.messages.append({"role": "assistant", "content": error_text, "avatar": avatar_emoji})
                             continue 
+
+    # MODO NORMAL O BUCLES
+    else:
+        for bucle_actual in range(num_bucles):
+            if num_bucles > 1:
+                st.markdown(f"<hr style='margin: 10px 0; border: 1px solid #2ECC71;'><h4 style='text-align:center; color:#2ECC71;'>🔄 Ronda {bucle_actual + 1} de {num_bucles}</h4><hr style='margin: 10px 0; border: 1px solid #2ECC71;'>", unsafe_allow_html=True)
+
+            for i, agente_key in enumerate(quemas_activos):
+                config = SOMBREROS[agente_key]
+                partes = agente_key.rsplit(" ", 1)
+                nombre_agente = partes[0]
+                avatar_emoji = partes[1]
+                
+                with st.chat_message("assistant", avatar=avatar_emoji):
+                    with st.spinner(f"✨ {nombre_agente} está pensando..."):
+                        try:
+                            historial_reciente = st.session_state.messages[-12:] 
+                            
+                            system_prompt = config["prompt"]
+                            
+                            if i == 0 and bucle_actual == 0:
+                                system_prompt += "\n\nNOTA: Eres el primer agente en responder. Puedes hacer un saludo MUY breve (ej: '¡Hola!') y luego dar tu respuesta directo al grano."
+                            else:
+                                system_prompt += "\n\nNOTA CRÍTICA: Ya hubo respuestas previas. NO saludes, NO te presentes y NO repitas lo que ya se dijo. Ve directo a tu punto principal."
+                                
+                            if bucle_actual > 0:
+                                system_prompt += "\nEstamos en una ronda de refinamiento. Revisa lo que se ha dicho, refina tu postura o aporta algo nuevo MUY brevemente sin repetir."
+
+                            if es_pro or es_multipro:
+                                system_prompt = system_prompt.replace("Sé EXTREMADAMENTE BREVE. Máximo 3 oraciones.", "NO TIENES LÍMITE DE LONGITUD, redacta una respuesta extensa, profunda y detallada.")
+                                system_prompt = system_prompt.replace("Sé EXTREMADAMENTE BREVE. Máximo 4 oraciones.", "NO TIENES LÍMITE DE LONGITUD, redacta una respuesta extensa, profunda y detallada.")
+                                max_tokens_api = 800 
+                            else:
+                                max_tokens_api = 200
+
+                            if hablar_en_plural:
+                                system_prompt += "\nHabla en PLURAL si es necesario (ej: 'Nosotros pensamos')."
+                            
+                            mensajes_api = [{"role": "system", "content": system_prompt}]
+                            
+                            for msg in historial_reciente:
+                                if msg["role"] == "assistant" and msg.get("avatar") != avatar_emoji:
+                                    mensajes_api.append({"role": "user", "content": f"(Otro agente dijo: {msg['content']})"})
+                                else:
+                                    mensajes_api.append({"role": msg["role"], "content": msg["content"]})
+                            
+                            merged_mensajes = [mensajes_api[0]]
+                            for m in mensajes_api[1:]:
+                                if m["role"] == "user" and merged_mensajes[-1]["role"] == "user":
+                                    merged_mensajes[-1]["content"] += "\n" + m["content"]
+                                else:
+                                    merged_mensajes.append(m)
+                                    
+                            if merged_mensajes[-1]["role"] == "assistant":
+                                merged_mensajes.append({"role": "user", "content": f"Ahora te toca a ti, {nombre_agente}. ¡Dime qué opinas!"})
+                            
+                            key_name = config["api_key_name"]
+                            api_key_a_usar = st.secrets["groq"][key_name]
+                            
+                            client = OpenAI(
+                                base_url="https://api.groq.com/openai/v1",
+                                api_key=api_key_a_usar
+                            )
+                            
+                            stream = client.chat.completions.create(
+                                model="llama-3.1-8b-instant",
+                                messages=merged_mensajes,
+                                stream=True,
+                                temperature=0.7,
+                                max_tokens=max_tokens_api
+                            )
+                            response = st.write_stream(stream_con_retraso(stream))
+                            
+                            if not response.strip():
+                                response = f"¡Hola! Soy {nombre_agente}. ¡Estoy listo para ayudarte! 🌟"
+                                
+                            st.session_state.messages.append({"role": "assistant", "content": response, "avatar": avatar_emoji})
+                            st.session_state.last_response = response
+                        except Exception as e:
+                            error_msg = str(e).lower()
+                            if "rate limit" in error_msg or "429" in error_msg or "limit" in error_msg:
+                                st.session_state.cooldown_hasta = datetime.now() + timedelta(seconds=40)
+                                msg_enfriamiento = "🌿 Respira, analiza nuestra comunicación... Muchos amigos están hablando conmigo ahora mismo. ¡Inténtalo de nuevo en 40 segundos!"
+                                st.warning(msg_enfriamiento)
+                                st.session_state.messages.append({"role": "assistant", "content": msg_enfriamiento, "avatar": "⏳"})
+                                st.rerun()
+                            else:
+                                error_text = f"Ups... {nombre_agente} se distrajo. ¡Intenta de nuevo!"
+                                st.error(error_text)
+                                st.session_state.messages.append({"role": "assistant", "content": error_text, "avatar": avatar_emoji})
+                                continue 
 
     verificar_correo_quincenal(st.session_state.usuario_actual)
 

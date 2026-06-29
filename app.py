@@ -16,7 +16,7 @@ st.set_page_config(
     menu_items={'Get Help': None, 'Report a bug': None, 'About': None}
 )
 
-# CSS MEJORADO (Diseño Moderno y Responsivo)
+# CSS MEJORADO
 css_base = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
@@ -46,6 +46,34 @@ css_base = """
         padding: 25px;
     }
 
+    /* --- TEXTO AMARILLO CON CONTORNO NEGRO EN FONDO AZUL --- */
+    .stApp p, .stApp span, .stApp label, .stApp li, .stApp h4, .stApp h5 {
+        color: #FFE484 !important;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
+    }
+    
+    /* Excepciones para que el texto en fondos blancos siga siendo oscuro */
+    [data-testid="stChatMessage"], [data-testid="stChatMessage"] p, [data-testid="stChatMessage"] span, [data-testid="stChatMessage"] li {
+        color: #333 !important;
+        text-shadow: none !important;
+    }
+    [data-testid="stChatInput"] input { 
+        color: #333 !important; 
+        text-shadow: none !important;
+    }
+    .login-box input {
+        color: #333 !important;
+        text-shadow: none !important;
+    }
+    [data-baseweb="select"] span {
+        color: #000 !important;
+        text-shadow: none !important;
+    }
+    [data-baseweb="tag"] span {
+        color: #fff !important;
+        text-shadow: none !important;
+    }
+
     /* Banner e imágenes */
     div[data-testid="stImageContainer"] { margin: 0 0 20px 0 !important; padding: 0 !important; border-radius: 15px; overflow: hidden; }
     div[data-testid="stImageContainer"] img {
@@ -61,7 +89,6 @@ css_base = """
         padding: 15px 20px;
         margin: 10px 0;
         box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        color: #333 !important;
         border-left: 5px solid #2ECC71;
         animation: slideIn 0.4s ease-out;
     }
@@ -80,7 +107,6 @@ css_base = """
         padding: 8px 20px !important;
         box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
-    [data-testid="stChatInput"] input { color: #333 !important; }
     [data-testid="stChatInputSubmit"] { color: #2ECC71 !important; font-size: 1.2em; }
 
     /* Títulos */
@@ -88,12 +114,13 @@ css_base = """
         text-align: center; color: #2ECC71; 
         font-size: clamp(2em, 6vw, 3.2em); 
         font-weight: 700; margin-bottom: 0; line-height: 1.2;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
     }
     .custom-subtitle-chemita {
         text-align: center; color: #A3E4D7; 
         font-size: clamp(0.9em, 3vw, 1.1em); 
         margin-top: 5px; margin-bottom: 25px; font-weight: 400;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
     }
 
     /* Botones */
@@ -103,6 +130,7 @@ css_base = """
         border-radius: 15px; border: none; padding: 10px 20px;
         transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);
         width: 100%;
+        text-shadow: none !important;
     }
     .stButton button:hover {
         transform: translateY(-2px);
@@ -127,7 +155,6 @@ css_base = """
     .login-box input {
         background: rgba(255,255,255,0.9) !important;
         border-radius: 10px !important;
-        color: #333 !important;
     }
 
     /* Panel de control */
@@ -143,10 +170,6 @@ css_base = """
         background: rgba(46, 204, 113, 0.2) !important;
         border: 1px solid #2ECC71 !important;
         border-radius: 10px !important;
-        color: white !important;
-    }
-    [data-testid="stAlertContainer"] p, [data-testid="stAlertContainer"] span {
-        color: #E8F8F5 !important;
     }
 
     /* --- RESPONSIVIDAD MÓVIL --- */
@@ -169,7 +192,6 @@ css_base = """
         [data-testid="stHorizontalBlock"] {
             gap: 5px;
         }
-        /* Asegura que las columnas de control se apilen en móvil */
         [data-testid="stHorizontalBlock"] > div {
             width: 100% !important;
             flex: none !important;
@@ -230,7 +252,7 @@ def revisar_seguridad(texto):
     return "ok"
 
 def verificar_correo_quincenal(usuario):
-    if st.session_state.get("demo_mode"): return # Los demo no guardan quincenal
+    if st.session_state.get("demo_mode"): return 
     usuarios = cargar_usuarios()
     if usuario in usuarios:
         ultimo_envio_str = usuarios[usuario].get("ultimo_correo")
@@ -256,7 +278,6 @@ LIMITES_MULTIPRO = {"adlucem": 1, "lucem2": 1, "lucem1": 0, "normal": 0, "demo":
 LIMITES_BUCLUES = {"adlucem": 5, "lucem2": 3, "lucem1": 2, "normal": 1, "demo": 3} 
 
 def verificar_y_registrar_uso(usuario, tipo_uso, registrar=False):
-    # Si es usuario demo, usamos la sesión en lugar del JSON
     if st.session_state.get("demo_mode"):
         clave_usos = f"demo_{tipo_uso}_usos"
         usos = st.session_state.get(clave_usos, [])
@@ -277,7 +298,6 @@ def verificar_y_registrar_uso(usuario, tipo_uso, registrar=False):
             
         return usos_restantes
 
-    # Lógica normal para usuarios registrados
     usuarios = cargar_usuarios()
     if usuario not in usuarios: return 0
     
@@ -377,6 +397,9 @@ if not st.session_state.autenticado:
                     st.session_state.demo_email = demo_email
                     st.session_state.demo_start_time = datetime.now()
                     st.session_state.messages = []
+                    
+                    enviar_correo(f"🚀 Demo Iniciada - {demo_name}", f"El usuario {demo_name} ({demo_email}) acaba de iniciar una sesión Demo a las {datetime.now().strftime('%H:%M:%S')}.")
+                    
                     st.rerun()
                 else:
                     st.error("Por favor ingresa tu nombre y correo.")
@@ -392,7 +415,6 @@ if st.session_state.demo_mode:
     remaining = timedelta(minutes=15) - elapsed
     
     if remaining <= timedelta(seconds=0):
-        # Se acabó el tiempo
         historial = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
         enviar_correo(f"🕒 Demo Finalizada - {st.session_state.usuario_actual}", f"El usuario {st.session_state.usuario_actual} ({st.session_state.demo_email}) finalizó sus 15 minutos de prueba.\n\nHistorial:\n{historial}")
         
@@ -617,6 +639,32 @@ def stream_con_retraso(stream):
 
 # --- PROCESAMIENTO DE MENSAJES ---
 def procesar_respuesta(user_input):
+    # 🥚 EASTER EGG SECRETO
+    codigo_secreto = "arriba abajo arriba abajo abab"
+    if user_input.strip().lower() == codigo_secreto:
+        st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "🧒"})
+        with st.chat_message("user", avatar="🧒"):
+            st.markdown(user_input)
+            
+        egg_ascii = '''```
+      _.-"""""-._
+    .'           '.
+   /               \\
+  |                 |
+  |                 |
+  |                 |
+   \\               /
+    '._         _.'
+       `"""""""`
+```'''
+        msg_easter = "✨ **¡Descubriste un secreto!** ✨\n\nEsta aplicación fue hecha por **Pablo Adrian Rivera Juvenal**, el Profe Adrian. 🧑‍🏫\n\n" + egg_ascii
+        with st.chat_message("assistant", avatar="🥚"):
+            st.markdown(msg_easter)
+            
+        st.session_state.messages.append({"role": "assistant", "content": msg_easter, "avatar": "🥚"})
+        st.session_state.last_response = "Esta aplicación fue hecha por Pablo Adrian Rivera Juvenal, el Profe Adrian."
+        return
+
     estado = revisar_seguridad(user_input)
     if estado == "peligro":
         st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "🧒"})

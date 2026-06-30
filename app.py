@@ -281,8 +281,8 @@ konami_js = f"""
 components.html(konami_js, height=0)
 
 # --- CONEXIÓN A SUPABASE ---
-url: str = os.environ.get("SUPABASE_URL", st.secrets.get("supabase", {}).get("url", ""))
-key: str = os.environ.get("SUPABASE_KEY", st.secrets.get("supabase", {}).get("key", ""))
+url: str = os.environ.get("SUPABASE_URL", "")
+key: str = os.environ.get("SUPABASE_KEY", "")
 supabase: Client = create_client(url, key)
 
 def obtener_usuario(username):
@@ -297,8 +297,8 @@ def actualizar_usuario(username, data):
 # --- SISTEMA DE SEGURIDAD Y NOTIFICACIONES (SILENCIOSO) ---
 def enviar_correo(asunto, mensaje):
     try:
-        resend.api_key = st.secrets["resend"]["api_key"]
-        admin_email = st.secrets["admin"]["email"]
+        resend.api_key = os.environ.get("RESEND_API_KEY", "")
+        admin_email = os.environ.get("ADMIN_EMAIL", "")
         r = resend.Emails.send({
             "from": "onboarding@resend.dev",
             "to": [admin_email],
@@ -821,8 +821,8 @@ def chat_fragment():
                             if mensajes_api[-1]["role"] == "assistant":
                                 mensajes_api.append({"role": "user", "content": f"Ahora te toca a ti, {nombre_agente}. ¡Dime qué opinas!"})
                             
-                            key_name = config["api_key_name"]
-                            api_key_a_usar = st.secrets["groq"][key_name]
+                            key_name = config["api_key_name"].upper()
+                            api_key_a_usar = os.environ.get(key_name, "")
                             
                             client = OpenAI(
                                 base_url="https://api.groq.com/openai/v1",
@@ -916,8 +916,8 @@ def chat_fragment():
                                 if merged_mensajes[-1]["role"] == "assistant":
                                     merged_mensajes.append({"role": "user", "content": f"Ahora te toca a ti, {nombre_agente}. ¡Dime qué opinas!"})
                                 
-                                key_name = config["api_key_name"]
-                                api_key_a_usar = st.secrets["groq"][key_name]
+                                key_name = config["api_key_name"].upper()
+                                api_key_a_usar = os.environ.get(key_name, "")
                                 
                                 client = OpenAI(
                                     base_url="https://api.groq.com/openai/v1",

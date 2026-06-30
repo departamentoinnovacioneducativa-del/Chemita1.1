@@ -1,4 +1,4 @@
-# MARK 4 - Chema IA
+# MARK 4 - Chemini
 import streamlit as st
 from openai import OpenAI
 import streamlit.components.v1 as components
@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 
 # CONFIGURACIÓN DE PÁGINA
 st.set_page_config(
-    page_title="Chema IA | Instituto Juventud",
+    page_title="Chemini | Instituto Juventud",
     page_icon="chemita.png",
     layout="centered",
     initial_sidebar_state="collapsed",
@@ -347,14 +347,13 @@ def verificar_correo_quincenal(usuario):
                 
         if enviar and len(st.session_state.messages) > 2:
             historial = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
-            enviar_correo(f"📋 Resumen quincenal de Chema IA - Usuario: {usuario}", f"Historial de los últimos 15 días con {usuario}:\n\n{historial}")
+            enviar_correo(f"📋 Resumen quincenal de Chemini - Usuario: {usuario}", f"Historial de los últimos 15 días con {usuario}:\n\n{historial}")
             usuarios[usuario]["ultimo_correo"] = datetime.now().isoformat()
             guardar_usuarios(usuarios)
 
 # --- SISTEMA DE LÍMITES (PRO, MULTIPRO Y BUCLUES) ---
 LIMITES_MODO_PRO = {"adlucem": 4, "lucem2": 3, "lucem1": 2, "normal": 1, "demo": 3}
 LIMITES_MULTIPRO = {"adlucem": 1, "lucem2": 1, "lucem1": 0, "normal": 0, "demo": 1}
-# CAMBIO MARK 4: Adlucem máximo 4 bucles
 LIMITES_BUCLUES = {"adlucem": 4, "lucem2": 3, "lucem1": 2, "normal": 1, "demo": 3} 
 
 def verificar_y_registrar_uso(usuario, tipo_uso, registrar=False):
@@ -418,7 +417,6 @@ if "num_bucles" not in st.session_state: st.session_state.num_bucles = 1
 if "demo_mode" not in st.session_state: st.session_state.demo_mode = False
 if "demo_start_time" not in st.session_state: st.session_state.demo_start_time = None
 if "demo_email" not in st.session_state: st.session_state.demo_email = ""
-# NUEVO MARK 4: Estado para Respuesta Paralela
 if "respuesta_paralela" not in st.session_state: st.session_state.respuesta_paralela = False
 
 def mostrar_titulo_chemita():
@@ -426,8 +424,8 @@ def mostrar_titulo_chemita():
         st.image("chemita.png", use_container_width=True)
     else:
         st.warning("🖼️ Falta subir 'chemita.png'")
-    st.markdown('<h1 class="custom-title-chemita">Chema IA</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="custom-subtitle-chemita">✨ Tu equipo de tutores para la preparatoria ✨</p>', unsafe_allow_html=True)
+    st.markdown('<h1 class="custom-title-chemita">Chemini</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="custom-subtitle-chemita">✨ Tu IA educativa de confianza ✨</p>', unsafe_allow_html=True)
 
 # ==========================================
 # PANTALLA DE LOGIN
@@ -467,7 +465,7 @@ if not st.session_state.autenticado:
 
         with tab2:
             st.subheader("🚀 Probar Demo (15 Minutos)")
-            st.write("Ingresa tu nombre y correo para probar Chema IA con todas las funciones desbloqueadas por 15 minutos.")
+            st.write("Ingresa tu nombre y correo para probar Chemini con todas las funciones desbloqueadas por 15 minutos.")
             demo_name = st.text_input("Tu nombre")
             demo_email = st.text_input("Tu correo electrónico")
             
@@ -503,7 +501,7 @@ if st.session_state.demo_mode:
         st.session_state.autenticado = False
         st.session_state.demo_mode = False
         st.session_state.messages = []
-        st.error("⏳ Tu tiempo de demostración (15 minutos) ha terminado. ¡Gracias por probar Chema IA! Si quieres seguir usándola, pídele a tu maestro una cuenta registrada.")
+        st.error("⏳ Tu tiempo de demostración (15 minutos) ha terminado. ¡Gracias por probar Chemini! Si quieres seguir usándola, pídele a tu maestro una cuenta registrada.")
         time.sleep(5)
         st.rerun()
     else:
@@ -534,55 +532,55 @@ with col_cerrar3:
         st.session_state.messages = []
         st.rerun()
 
-# --- DEFINICIÓN DE LOS AGENTES CHEMA IA (PROMPTS BREVES) ---
+# --- DEFINICIÓN DE LOS AGENTES CHEMINI (PROMPTS DIDÁCTICOS) ---
 SOMBREROS = {
     "Hechos 🤍": {
         "api_key_name": "api_key_blanco",
-        "prompt": """Eres Chema IA (Hechos). Tutor de preparatoria. Enfoque: OBJETIVIDAD y DATOS.
+        "prompt": """Eres Chemini (Hechos). Tutor de preparatoria. Enfoque: OBJETIVIDAD y DATOS.
 Das información precisa, clara y directa. Explicas paso a paso basándote en la realidad.
-REGLA ESTRICTA: Sé EXTREMADAMENTE BREVE. Máximo 3 oraciones. Ve directo al grano, sin saludos ni introducciones largas. Usa emojis como 🔍📚."""
+REGLA ESTRICTA: Sé EXTREMADAMENTE BREVE. Máximo 3 oraciones. Ve directo al grano, sin saludos ni introducciones largas. SIEMPRE termina tu respuesta con una pregunta didáctica que invite al estudiante a investigar o aplicar el dato. Usa emojis como 🔍📚."""
     },
     "Emociones ❤️": {
         "api_key_name": "api_key_rojo",
-        "prompt": """Eres Chema IA (Emociones). Tutor de preparatoria. Enfoque: EMPATÍA y APOYO EMOCIONAL.
+        "prompt": """Eres Chemini (Emociones). Tutor de preparatoria. Enfoque: EMPATÍA y APOYO EMOCIONAL.
 Validas emociones ("es normal sentirse así"). Ayudas a calmarse para pensar con claridad.
-REGLA ESTRICTA: Sé EXTREMADAMENTE BREVE. Máximo 3 oraciones. Ve directo al grano, sin saludos ni introducciones largas. Usa emojis como ❤️🤗."""
+REGLA ESTRICTA: Sé EXTREMADAMENTE BREVE. Máximo 3 oraciones. Ve directo al grano, sin saludos ni introducciones largas. SIEMPRE termina tu respuesta con una pregunta didáctica que invite a la reflexión emocional. Usa emojis como ❤️🤗."""
     },
     "Cautela 🖤": {
         "api_key_name": "api_key_negro",
-        "prompt": """Eres Chema IA (Cautela). Tutor de preparatoria. Enfoque: REVISIÓN y PREVENCIÓN DE ERRORES.
+        "prompt": """Eres Chemini (Cautela). Tutor de preparatoria. Enfoque: REVISIÓN y PREVENCIÓN DE ERRORES.
 Revisas respuestas. Si están mal, explicas el error de lógica o cálculo de forma constructiva.
-REGLA ESTRICTA: Sé EXTREMADAMENTE BREVE. Máximo 3 oraciones. Ve directo al grano, sin saludos ni introducciones largas. Usa emojis como 🛡️⚠️."""
+REGLA ESTRICTA: Sé EXTREMADAMENTE BREVE. Máximo 3 oraciones. Ve directo al grano, sin saludos ni introducciones largas. SIEMPRE termina tu respuesta con una pregunta didáctica que invite al estudiante a corregir o evitar el error. Usa emojis como 🛡️⚠️."""
     },
     "Optimismo 💛": {
         "api_key_name": "api_key_amarillo",
-        "prompt": """Eres Chema IA (Optimismo). Tutor de preparatoria. Enfoque: MOTIVACIÓN y LADO POSITIVO.
+        "prompt": """Eres Chemini (Optimismo). Tutor de preparatoria. Enfoque: MOTIVACIÓN y LADO POSITIVO.
 Si el estudiante falla, muestras lo que sí hizo bien. Le explicas por qué aprender esto es genial.
-REGLA ESTRICTA: Sé EXTREMADAMENTE BREVE. Máximo 3 oraciones. Ve directo al grano, sin saludos ni introducciones largas. Usa emojis como ☀️💪."""
+REGLA ESTRICTA: Sé EXTREMADAMENTE BREVE. Máximo 3 oraciones. Ve directo al grano, sin saludos ni introducciones largas. SIEMPRE termina tu respuesta con una pregunta didáctica que invite a la acción o a visualizar el éxito. Usa emojis como ☀️💪."""
     },
     "Creativo 💚": {
         "api_key_name": "api_key_verde",
-        "prompt": """Eres Chema IA (Creativo). Tutor de preparatoria. Enfoque: IMAGINACIÓN y METÁFORAS.
+        "prompt": """Eres Chemini (Creativo). Tutor de preparatoria. Enfoque: IMAGINACIÓN y METÁFORAS.
 Explicas con ideas divertidas. Propones mapas mentales o juegos para resolver la tarea.
-REGLA ESTRICTA: Sé EXTREMADAMENTE BREVE. Máximo 3 oraciones. Ve directo al grano, sin saludos ni introducciones largas. Usa emojis como 🎨💡."""
+REGLA ESTRICTA: Sé EXTREMADAMENTE BREVE. Máximo 3 oraciones. Ve directo al grano, sin saludos ni introducciones largas. SIEMPRE termina tu respuesta con una pregunta didáctica que invite a imaginar una solución alternativa. Usa emojis como 🎨💡."""
     },
     "Organizador 💙": {
         "api_key_name": "api_key_azul",
-        "prompt": """Eres Chema IA (Organizador). Tutor de preparatoria. Enfoque: ORDEN y CONTROL.
+        "prompt": """Eres Chemini (Organizador). Tutor de preparatoria. Enfoque: ORDEN y CONTROL.
 Divides proyectos grandes en pasos pequeños. Estructuras las ideas de otros agentes si los hay.
-REGLA ESTRICTA: Sé EXTREMADAMENTE BREVE. Máximo 4 oraciones. Ve directo al grano, sin saludos ni introducciones largas. Usa emojis como 🧠📝."""
+REGLA ESTRICTA: Sé EXTREMADAMENTE BREVE. Máximo 4 oraciones. Ve directo al grano, sin saludos ni introducciones largas. SIEMPRE termina tu respuesta con una pregunta didáctica sobre cuál debería ser el siguiente paso lógico. Usa emojis como 🧠📝."""
     },
     "Psique 🫂": {
         "api_key_name": "api_key_psique",
-        "prompt": """Eres Chema IA (Psique). Apoyo de primeros auxilios psicológicos para preparatoria. Enfoque: SALUD MENTAL.
+        "prompt": """Eres Chemini (Psique). Apoyo de primeros auxilios psicológicos para preparatoria. Enfoque: SALUD MENTAL.
 Escuchas sin juzgar y ayudas a calmarse. Si hay riesgo grave, recomienda contactar a Marce de psicología al 5555544440.
-REGLA ESTRICTA: Sé EXTREMADAMENTE BREVE. Máximo 3 oraciones. Ve directo al grano, sin saludos ni introducciones largas. Usa emojis como 🫂💙."""
+REGLA ESTRICTA: Sé EXTREMADAMENTE BREVE. Máximo 3 oraciones. Ve directo al grano, sin saludos ni introducciones largas. SIEMPRE termina tu respuesta con una pregunta didáctica enfocada en el autocuidado o la regulación emocional. Usa emojis como 🫂💙."""
     },
     "Profe Adrian 🧑‍🏫": {
         "api_key_name": "api_key_profe",
-        "prompt": """Eres Chema IA (Profe Adrian). Tutor socrático de preparatoria. Enfoque: PENSAMIENTO CRÍTICO, LEGALIDAD e IA.
+        "prompt": """Eres Chemini (Profe Adrian). Tutor socrático de preparatoria. Enfoque: PENSAMIENTO CRÍTICO, LEGALIDAD e IA.
 No des respuestas directas, haz preguntas paso a paso. Recomienda IAs específicas según el tema (ej: Perplexity para investigar).
-REGLA ESTRICTA: Sé EXTREMADAMENTE BREVE. Máximo 3 oraciones. Ve directo al grano, sin saludos ni introducciones largas. Usa emojis como 🧑‍🏫🤖."""
+REGLA ESTRICTA: Sé EXTREMADAMENTE BREVE. Máximo 3 oraciones. Ve directo al grano, sin saludos ni introducciones largas. SIEMPRE termina tu respuesta con una pregunta didáctica socrática que desafíe el pensamiento crítico. Usa emojis como 🧑‍🏫🤖."""
     }
 }
 
@@ -590,7 +588,6 @@ REGLA ESTRICTA: Sé EXTREMADAMENTE BREVE. Máximo 3 oraciones. Ve directo al gra
 with st.container():
     st.markdown("#### ⚙️ Panel de Control")
     st.markdown("*(El orden de selección define el orden de respuesta)*")
-    # CAMBIO MARK 4: Máximo 3 agentes
     quemas_activos = st.multiselect(
         "Selecciona tus agentes",
         options=list(SOMBREROS.keys()),
@@ -619,7 +616,7 @@ else:
 max_bucles = LIMITES_BUCLUES.get(tipo_usuario_actual, 1)
 limite_multipro = LIMITES_MULTIPRO.get(tipo_usuario_actual, 0)
 
-# --- NUEVA FUNCIÓN MARK 4: RESPUESTA PARALELA ---
+# --- FUNCIÓN MARK 4: RESPUESTA PARALELA ---
 st.markdown("---")
 col_par1, col_par2 = st.columns([1, 1])
 with col_par1:
@@ -678,7 +675,7 @@ else:
 st.markdown("---")
 
 if not st.session_state.messages:
-    bienvenida = f"✨ ¡Hola, {st.session_state.usuario_actual}! Somos Chema IA. Tu equipo de tutores de preparatoria. ¡Adelante siempre adelante! ¿En qué te ayudamos a pensar hoy? 😊📚"
+    bienvenida = f"✨ ¡Hola, {st.session_state.usuario_actual}! Somos Chemini. Tu IA educativa de confianza. ¡Adelante siempre adelante! ¿En qué te ayudamos a pensar hoy? 😊📚"
     st.session_state.messages.append({"role": "assistant", "content": bienvenida, "avatar": "🤖"})
     st.session_state.last_response = bienvenida
 
@@ -831,12 +828,10 @@ def procesar_respuesta(user_input):
                         else:
                             max_tokens_api = 200
 
-                        # En paralela, no ven lo que otros dicen. Solo system + historial (sin la nota de otros agentes)
                         mensajes_api = [{"role": "system", "content": system_prompt}]
                         for msg in historial_reciente:
                             mensajes_api.append({"role": msg["role"], "content": msg["content"]})
                             
-                        # Asegurar que el último sea el user
                         if mensajes_api[-1]["role"] == "assistant":
                             mensajes_api.append({"role": "user", "content": f"Ahora te toca a ti, {nombre_agente}. ¡Dime qué opinas!"})
                         
@@ -863,7 +858,6 @@ def procesar_respuesta(user_input):
                         st.session_state.messages.append({"role": "assistant", "content": response, "avatar": avatar_emoji})
                         st.session_state.last_response = response
                         
-                        # Pausa de 2 segundos entre agentes paralelos para no saturar la API
                         if i < len(quemas_activos) - 1:
                             time.sleep(2)
                             

@@ -1,12 +1,12 @@
-# MARK 4 - Chemini
+# CHEMINI 0.0 - Inauguración Oficial (Hugging Face + Supabase Ready)
 import streamlit as st
 from openai import OpenAI
 import streamlit.components.v1 as components
 import os
 import resend
-import json
 import time
 from datetime import datetime, timedelta
+from supabase import create_client, Client
 
 # CONFIGURACIÓN DE PÁGINA
 st.set_page_config(
@@ -280,26 +280,19 @@ konami_js = f"""
 """
 components.html(konami_js, height=0)
 
-# --- GESTIÓN DE BASE DE DATOS JSON ---
-DB_FILE = "usuarios.json"
+# --- CONEXIÓN A SUPABASE ---
+url: str = os.environ.get("SUPABASE_URL", st.secrets.get("supabase", {}).get("url", ""))
+key: str = os.environ.get("SUPABASE_KEY", st.secrets.get("supabase", {}).get("key", ""))
+supabase: Client = create_client(url, key)
 
-def cargar_usuarios():
-    if os.path.exists(DB_FILE):
-        try:
-            with open(DB_FILE, "r") as f:
-                return json.load(f)
-        except:
-            return {}
-    return {}
+def obtener_usuario(username):
+    response = supabase.table("usuarios").select("*").eq("username", username).execute()
+    if response.data:
+        return response.data[0]
+    return None
 
-def guardar_usuarios(usuarios):
-    try:
-        with open(DB_FILE, "w") as f:
-            json.dump(usuarios, f, indent=4)
-        return True
-    except Exception as e:
-        print(f"Error al guardar: {e}")
-        return False
+def actualizar_usuario(username, data):
+    supabase.table("usuarios").update(data).eq("username", username).execute()
 
 # --- SISTEMA DE SEGURIDAD Y NOTIFICACIONES (SILENCIOSO) ---
 def enviar_correo(asunto, mensaje):
@@ -332,24 +325,23 @@ def revisar_seguridad(texto):
 
 def verificar_correo_quincenal(usuario):
     if st.session_state.get("demo_mode"): return 
-    usuarios = cargar_usuarios()
-    if usuario in usuarios:
-        ultimo_envio_str = usuarios[usuario].get("ultimo_correo")
-        enviar = False
-        
-        if not ultimo_envio_str:
-            usuarios[usuario]["ultimo_correo"] = datetime.now().isoformat()
-            guardar_usuarios(usuarios)
-        else:
-            fecha_ultimo = datetime.fromisoformat(ultimo_envio_str)
-            if datetime.now() - fecha_ultimo >= timedelta(days=15):
-                enviar = True
-                
-        if enviar and len(st.session_state.messages) > 2:
-            historial = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
-            enviar_correo(f"📋 Resumen quincenal de Chemini - Usuario: {usuario}", f"Historial de los últimos 15 días con {usuario}:\n\n{historial}")
-            usuarios[usuario]["ultimo_correo"] = datetime.now().isoformat()
-            guardar_usuarios(usuarios)
+    user_data = obtener_usuario(usuario)
+    if not user_data: return
+    
+    ultimo_envio_str = user_data.get("ultimo_correo")
+    enviar = False
+    
+    if not ultimo_envio_str:
+        actualizar_usuario(usuario, {"ultimo_correo": datetime.now().isoformat()})
+    else:
+        fecha_ultimo = datetime.fromisoformat(ultimo_envio_str)
+        if datetime.now() - fecha_ultimo >= timedelta(days=15):
+            enviar = True
+            
+    if enviar and len(st.session_state.messages) > 2:
+        historial = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
+        enviar_correo(f"📋 Resumen quincenal de Chemini - Usuario: {usuario}", f"Historial de los últimos 15 días con {usuario}:\n\n{historial}")
+        actualizar_usuario(usuario, {"ultimo_correo": datetime.now().isoformat()})
 
 # --- SISTEMA DE LÍMITES (PRO, MULTIPRO Y BUCLUES) ---
 LIMITES_MODO_PRO = {"adlucem": 4, "lucem2": 3, "lucem1": 2, "normal": 1, "demo": 3}
@@ -377,15 +369,15 @@ def verificar_y_registrar_uso(usuario, tipo_uso, registrar=False):
             
         return usos_restantes
 
-    usuarios = cargar_usuarios()
-    if usuario not in usuarios: return 0
+    user_data = obtener_usuario(usuario)
+    if not user_data: return 0
     
     clave_usos = f"{tipo_uso}_usos"
-    usos = usuarios[usuario].get(clave_usos, [])
+    usos = user_data.get(clave_usos, [])
     ahora = datetime.now()
     usos_validos = [u for u in usos if ahora - datetime.fromisoformat(u) < timedelta(hours=1)]
     
-    tipo = usuarios[usuario].get("tipo", "normal")
+    tipo = user_data.get("tipo", "normal")
     if tipo_uso == "modo_pro": limite = LIMITES_MODO_PRO.get(tipo, 1)
     elif tipo_uso == "multipro": limite = LIMITES_MULTIPRO.get(tipo, 0)
     else: limite = 0
@@ -393,13 +385,11 @@ def verificar_y_registrar_uso(usuario, tipo_uso, registrar=False):
     usos_restantes = limite - len(usos_validos)
     if registrar and usos_restantes > 0:
         usos_validos.append(ahora.isoformat())
-        usuarios[usuario][clave_usos] = usos_validos
-        guardar_usuarios(usuarios)
+        actualizar_usuario(usuario, {clave_usos: usos_validos})
         usos_restantes -= 1
     elif not registrar:
         if len(usos_validos) != len(usos):
-            usuarios[usuario][clave_usos] = usos_validos
-            guardar_usuarios(usuarios)
+            actualizar_usuario(usuario, {clave_usos: usos_validos})
             
     return usos_restantes
 
@@ -443,9 +433,9 @@ if not st.session_state.autenticado:
             password_input = st.text_input("Contraseña", type="password")
             
             if st.button("Entrar", use_container_width=True):
-                usuarios = cargar_usuarios()
-                if usuario_input in usuarios:
-                    bloqueado_hasta_str = usuarios[usuario_input].get("bloqueado_hasta")
+                user_data = obtener_usuario(usuario_input)
+                if user_data:
+                    bloqueado_hasta_str = user_data.get("bloqueado_hasta")
                     if bloqueado_hasta_str:
                         bloqueado_hasta = datetime.fromisoformat(bloqueado_hasta_str)
                         if datetime.now() < bloqueado_hasta:
@@ -454,7 +444,7 @@ if not st.session_state.autenticado:
                             minutos = int((tiempo_restante.total_seconds() % 3600) // 60)
                             st.error(f"⏳ ¡Oops! Estás suspendido. Vuelve en {horas}h y {minutos}m.")
                             st.stop()
-                    if usuarios[usuario_input]["password"] == password_input:
+                    if user_data["password"] == password_input:
                         st.session_state.autenticado = True
                         st.session_state.usuario_actual = usuario_input
                         st.rerun()
@@ -610,13 +600,13 @@ else:
 if st.session_state.get("demo_mode"):
     tipo_usuario_actual = "demo"
 else:
-    usuarios_db = cargar_usuarios()
-    tipo_usuario_actual = usuarios_db.get(st.session_state.usuario_actual, {}).get("tipo", "normal")
+    user_data = obtener_usuario(st.session_state.usuario_actual)
+    tipo_usuario_actual = user_data.get("tipo", "normal") if user_data else "normal"
 
 max_bucles = LIMITES_BUCLUES.get(tipo_usuario_actual, 1)
 limite_multipro = LIMITES_MULTIPRO.get(tipo_usuario_actual, 0)
 
-# --- FUNCIÓN MARK 4: RESPUESTA PARALELA ---
+# --- FUNCIÓN: RESPUESTA PARALELA ---
 st.markdown("---")
 col_par1, col_par2 = st.columns([1, 1])
 with col_par1:
@@ -674,53 +664,52 @@ else:
 
 st.markdown("---")
 
-if not st.session_state.messages:
-    bienvenida = f"✨ ¡Hola, {st.session_state.usuario_actual}! Somos Chemini. Tu IA educativa de confianza. ¡Adelante siempre adelante! ¿En qué te ayudamos a pensar hoy? 😊📚"
-    st.session_state.messages.append({"role": "assistant", "content": bienvenida, "avatar": "🤖"})
-    st.session_state.last_response = bienvenida
+# --- OPTIMIZACIÓN: FRAGMENTO DE CHAT (AHORRO DE RAM) ---
+@st.fragment(run_sync=True)
+def chat_fragment():
+    if not st.session_state.messages:
+        bienvenida = f"✨ ¡Hola, {st.session_state.usuario_actual}! Somos Chemini. Tu IA educativa de confianza. ¡Adelante siempre adelante! ¿En qué te ayudamos a pensar hoy? 😊📚"
+        st.session_state.messages.append({"role": "assistant", "content": bienvenida, "avatar": "🤖"})
+        st.session_state.last_response = bienvenida
 
-for message in st.session_state.messages:
-    if message["role"] != "system":
-        avatar = message.get("avatar", "🤖")
-        with st.chat_message(message["role"], avatar=avatar):
-            st.markdown(message["content"])
+    for message in st.session_state.messages:
+        if message["role"] != "system":
+            avatar = message.get("avatar", "🤖")
+            with st.chat_message(message["role"], avatar=avatar):
+                st.markdown(message["content"])
 
-# --- FUNCIÓN DE VOZ (TEXT-TO-SPEECH) ---
-def speak_js(text):
-    clean_text = text.replace("'", "\\'").replace('"', '\\"').replace("\n", " ")
-    js_code = f"""
-    <div id="audio-trigger" style="height:0; overflow:hidden;"></div>
-    <script>
-        var text = "{clean_text}";
-        function hablar() {{
-            if ('speechSynthesis' in window) {{
-                var utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'es-MX'; utterance.rate = 0.9; utterance.pitch = 1.1;
-                window.speechSynthesis.cancel(); window.speechSynthesis.speak(utterance);
+    def speak_js(text):
+        clean_text = text.replace("'", "\\'").replace('"', '\\"').replace("\n", " ")
+        js_code = f"""
+        <div id="audio-trigger" style="height:0; overflow:hidden;"></div>
+        <script>
+            var text = "{clean_text}";
+            function hablar() {{
+                if ('speechSynthesis' in window) {{
+                    var utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'es-MX'; utterance.rate = 0.9; utterance.pitch = 1.1;
+                    window.speechSynthesis.cancel(); window.speechSynthesis.speak(utterance);
+                }}
             }}
-        }}
-        hablar();
-    </script>
-    """
-    components.html(js_code, height=0)
+            hablar();
+        </script>
+        """
+        components.html(js_code, height=0)
 
-# --- GENERADOR DE ESCRITURA LENTA (0.11s) ---
-def stream_con_retraso(stream):
-    for chunk in stream:
-        if chunk.choices[0].delta.content:
-            yield chunk.choices[0].delta.content
-            time.sleep(0.11) 
+    def stream_con_retraso(stream):
+        for chunk in stream:
+            if chunk.choices[0].delta.content:
+                yield chunk.choices[0].delta.content
+                time.sleep(0.11) 
 
-# --- PROCESAMIENTO DE MENSAJES ---
-def procesar_respuesta(user_input):
-    # 🥚 EASTER EGG: CÓDIGO KONAMI EN TEXTO
-    codigo_secreto = "arriba arriba abajo abajo izquierda derecha izquierda derecha b a"
-    if user_input.strip().lower() == codigo_secreto:
-        st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "🧒"})
-        with st.chat_message("user", avatar="🧒"):
-            st.markdown(user_input)
-            
-        egg_ascii = '''```
+    def procesar_respuesta(user_input):
+        codigo_secreto = "arriba arriba abajo abajo izquierda derecha izquierda derecha b a"
+        if user_input.strip().lower() == codigo_secreto:
+            st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "🧒"})
+            with st.chat_message("user", avatar="🧒"):
+                st.markdown(user_input)
+                
+            egg_ascii = '''```
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡤⠦⢤⣠⠖⠶⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⢠⠏⢀⠤⠤⣽⣤⠚⠺⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⢸⢠⠋⠀⠀⠈⢇⢀⠀⢸⣄⣠⣤⣤⣀⡀⠀⠀⠀⠀
@@ -749,138 +738,63 @@ def procesar_respuesta(user_input):
 ⠀⠘⡷⠤⣀⣀⣀⣀⠠⠔⣺⠃⠀⠉⠙⠊⠙⠒⠒⠒⠒⠒⠚⠁⠀⠀⠀⠀
 ⠀⠀⠉⠓⠒⠦⠶⠖⠒⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ```'''
-        msg_easter = "✨ **Esta aplicación fue hecha por Pablo Adrian Rivera Juvenal el Profe Adrian** ✨\n\nSi no sabes quién es, déjame decirte que:\n\n" + egg_ascii
-        
-        with st.chat_message("assistant", avatar="🥚"):
-            st.markdown(msg_easter)
+            msg_easter = "✨ **Esta aplicación fue hecha por Pablo Adrian Rivera Juvenal el Profe Adrian** ✨\n\nSi no sabes quién es, déjame decirte que:\n\n" + egg_ascii
             
-        st.session_state.messages.append({"role": "assistant", "content": msg_easter, "avatar": "🥚"})
-        st.session_state.last_response = "Esta aplicación fue hecha por Pablo Adrian Rivera Juvenal, el Profe Adrian."
-        return
+            with st.chat_message("assistant", avatar="🥚"):
+                st.markdown(msg_easter)
+                
+            st.session_state.messages.append({"role": "assistant", "content": msg_easter, "avatar": "🥚"})
+            st.session_state.last_response = "Esta aplicación fue hecha por Pablo Adrian Rivera Juvenal, el Profe Adrian."
+            return
 
-    estado = revisar_seguridad(user_input)
-    if estado == "peligro":
-        st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "🧒"})
-        with st.chat_message("user", avatar="🧒"): st.markdown(user_input)
-        msg_apoyo = "💧 Entiendo que estás pasando por un momento muy difícil. No estás solo. Por favor, habla ahora mismo con un adulto de confianza, con Marce de psicología al 5555544440, o llama al SAPTEL: 55 5259-8121. ¡Tu vida es muy valiosa! ❤️"
-        with st.chat_message("assistant", avatar="❤️"):
-            st.markdown(msg_apoyo)
-        st.session_state.messages.append({"role": "assistant", "content": msg_apoyo, "avatar": "❤️"})
-        st.session_state.last_response = msg_apoyo
-        historial = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
-        enviar_correo(f"🚨 ALERTA GRAVE - Usuario: {st.session_state.usuario_actual}", f"El usuario {st.session_state.usuario_actual} escribió algo preocupante.\n\nHistorial:\n\n{historial}")
-        return
+        estado = revisar_seguridad(user_input)
+        if estado == "peligro":
+            st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "🧒"})
+            with st.chat_message("user", avatar="🧒"): st.markdown(user_input)
+            msg_apoyo = "💧 Entiendo que estás pasando por un momento muy difícil. No estás solo. Por favor, habla ahora mismo con un adulto de confianza, con Marce de psicología al 5555544440, o llama al SAPTEL: 55 5259-8121. ¡Tu vida es muy valiosa! ❤️"
+            with st.chat_message("assistant", avatar="❤️"):
+                st.markdown(msg_apoyo)
+            st.session_state.messages.append({"role": "assistant", "content": msg_apoyo, "avatar": "❤️"})
+            st.session_state.last_response = msg_apoyo
+            historial = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
+            enviar_correo(f"🚨 ALERTA GRAVE - Usuario: {st.session_state.usuario_actual}", f"El usuario {st.session_state.usuario_actual} escribió algo preocupante.\n\nHistorial:\n\n{historial}")
+            return
 
-    elif estado == "bloqueo":
-        st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "🧒"})
-        if not st.session_state.get("demo_mode"):
-            usuarios = cargar_usuarios()
-            if st.session_state.usuario_actual in usuarios:
-                usuarios[st.session_state.usuario_actual]["bloqueado_hasta"] = (datetime.now() + timedelta(hours=24)).isoformat()
-                guardar_usuarios(usuarios)
-        
-        st.session_state.ban_hasta = datetime.now() + timedelta(hours=24)
-        
-        msg_bloqueo = "🚫 ¡Oops! Usaste palabras inapropiadas. Como comunidad, debemos ser amables. Has sido suspendido por 24 horas. ¡Hasta pronto!"
-        st.session_state.messages.append({"role": "assistant", "content": msg_bloqueo, "avatar": "🖤"})
-        enviar_correo(f"⚠️ Usuario bloqueado: {st.session_state.usuario_actual}", f"El usuario {st.session_state.usuario_actual} dijo:\n\n{user_input}\n\nY ha sido bloqueado 24h.")
-        st.rerun()
-
-    with st.chat_message("user", avatar="🧒"):
-        st.markdown(user_input)
-    st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "🧒"})
-
-    hablar_en_plural = len(quemas_activos) > 1
-    num_bucles = st.session_state.get("num_bucles", 1)
-    es_pro = st.session_state.get("modo_pro_activo", False)
-    es_multipro = st.session_state.get("multipro_activo", False)
-    es_paralela = st.session_state.get("respuesta_paralela", False)
-    
-    if es_pro:
-        verificar_y_registrar_uso(st.session_state.usuario_actual, "modo_pro", registrar=True)
-        st.session_state.modo_pro_activo = False
-    elif es_multipro:
-        verificar_y_registrar_uso(st.session_state.usuario_actual, "multipro", registrar=True)
-        st.session_state.multipro_activo = False
-
-    # --- INICIO DE RESPUESTAS (NORMALES, BUCLES O PARALELAS) ---
-    
-    # MODO RESPUESTA PARALELA
-    if es_paralela and len(quemas_activos) > 1:
-        st.markdown(f"<h4 style='text-align:center; color:#2ECC71;'>⚡ Respuestas Paralelas</h4>", unsafe_allow_html=True)
-        
-        for i, agente_key in enumerate(quemas_activos):
-            config = SOMBREROS[agente_key]
-            partes = agente_key.rsplit(" ", 1)
-            nombre_agente = partes[0]
-            avatar_emoji = partes[1]
+        elif estado == "bloqueo":
+            st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "🧒"})
+            if not st.session_state.get("demo_mode"):
+                actualizar_usuario(st.session_state.usuario_actual, {"bloqueado_hasta": (datetime.now() + timedelta(hours=24)).isoformat()})
             
-            with st.chat_message("assistant", avatar=avatar_emoji):
-                with st.spinner(f"⚡ {nombre_agente} está procesando..."):
-                    try:
-                        historial_reciente = st.session_state.messages[-12:] 
-                        
-                        system_prompt = config["prompt"]
-                        if es_pro or es_multipro:
-                            system_prompt = system_prompt.replace("Sé EXTREMADAMENTE BREVE. Máximo 3 oraciones.", "NO TIENES LÍMITE DE LONGITUD, redacta una respuesta extensa, profunda y detallada.")
-                            system_prompt = system_prompt.replace("Sé EXTREMADAMENTE BREVE. Máximo 4 oraciones.", "NO TIENES LÍMITE DE LONGITUD, redacta una respuesta extensa, profunda y detallada.")
-                            max_tokens_api = 800 
-                        else:
-                            max_tokens_api = 200
+            st.session_state.ban_hasta = datetime.now() + timedelta(hours=24)
+            
+            msg_bloqueo = "🚫 ¡Oops! Usaste palabras inapropiadas. Como comunidad, debemos ser amables. Has sido suspendido por 24 horas. ¡Hasta pronto!"
+            st.session_state.messages.append({"role": "assistant", "content": msg_bloqueo, "avatar": "🖤"})
+            enviar_correo(f"⚠️ Usuario bloqueado: {st.session_state.usuario_actual}", f"El usuario {st.session_state.usuario_actual} dijo:\n\n{user_input}\n\nY ha sido bloqueado 24h.")
+            st.rerun()
 
-                        mensajes_api = [{"role": "system", "content": system_prompt}]
-                        for msg in historial_reciente:
-                            mensajes_api.append({"role": msg["role"], "content": msg["content"]})
-                            
-                        if mensajes_api[-1]["role"] == "assistant":
-                            mensajes_api.append({"role": "user", "content": f"Ahora te toca a ti, {nombre_agente}. ¡Dime qué opinas!"})
-                        
-                        key_name = config["api_key_name"]
-                        api_key_a_usar = st.secrets["groq"][key_name]
-                        
-                        client = OpenAI(
-                            base_url="https://api.groq.com/openai/v1",
-                            api_key=api_key_a_usar
-                        )
-                        
-                        stream = client.chat.completions.create(
-                            model="llama-3.1-8b-instant",
-                            messages=mensajes_api,
-                            stream=True,
-                            temperature=0.7,
-                            max_tokens=max_tokens_api
-                        )
-                        response = st.write_stream(stream_con_retraso(stream))
-                        
-                        if not response.strip():
-                            response = f"¡Hola! Soy {nombre_agente}. ¡Estoy listo para ayudarte! 🌟"
-                            
-                        st.session_state.messages.append({"role": "assistant", "content": response, "avatar": avatar_emoji})
-                        st.session_state.last_response = response
-                        
-                        if i < len(quemas_activos) - 1:
-                            time.sleep(2)
-                            
-                    except Exception as e:
-                        error_msg = str(e).lower()
-                        if "rate limit" in error_msg or "429" in error_msg or "limit" in error_msg:
-                            st.session_state.cooldown_hasta = datetime.now() + timedelta(seconds=40)
-                            msg_enfriamiento = "🌿 Respira, analiza nuestra comunicación... Muchos amigos están hablando conmigo ahora mismo. ¡Inténtalo de nuevo en 40 segundos!"
-                            st.warning(msg_enfriamiento)
-                            st.session_state.messages.append({"role": "assistant", "content": msg_enfriamiento, "avatar": "⏳"})
-                            st.rerun()
-                        else:
-                            error_text = f"Ups... {nombre_agente} se distrajo. ¡Intenta de nuevo!"
-                            st.error(error_text)
-                            st.session_state.messages.append({"role": "assistant", "content": error_text, "avatar": avatar_emoji})
-                            continue 
+        with st.chat_message("user", avatar="🧒"):
+            st.markdown(user_input)
+        st.session_state.messages.append({"role": "user", "content": user_input, "avatar": "🧒"})
 
-    # MODO NORMAL O BUCLES
-    else:
-        for bucle_actual in range(num_bucles):
-            if num_bucles > 1:
-                st.markdown(f"<hr style='margin: 10px 0; border: 1px solid #2ECC71;'><h4 style='text-align:center; color:#2ECC71;'>🔄 Ronda {bucle_actual + 1} de {num_bucles}</h4><hr style='margin: 10px 0; border: 1px solid #2ECC71;'>", unsafe_allow_html=True)
+        hablar_en_plural = len(quemas_activos) > 1
+        num_bucles = st.session_state.get("num_bucles", 1)
+        es_pro = st.session_state.get("modo_pro_activo", False)
+        es_multipro = st.session_state.get("multipro_activo", False)
+        es_paralela = st.session_state.get("respuesta_paralela", False)
+        
+        if es_pro:
+            verificar_y_registrar_uso(st.session_state.usuario_actual, "modo_pro", registrar=True)
+            st.session_state.modo_pro_activo = False
+        elif es_multipro:
+            verificar_y_registrar_uso(st.session_state.usuario_actual, "multipro", registrar=True)
+            st.session_state.multipro_activo = False
 
+        # --- INICIO DE RESPUESTAS (NORMALES, BUCLES O PARALELAS) ---
+        
+        # MODO RESPUESTA PARALELA
+        if es_paralela and len(quemas_activos) > 1:
+            st.markdown(f"<h4 style='text-align:center; color:#2ECC71;'>⚡ Respuestas Paralelas</h4>", unsafe_allow_html=True)
+            
             for i, agente_key in enumerate(quemas_activos):
                 config = SOMBREROS[agente_key]
                 partes = agente_key.rsplit(" ", 1)
@@ -888,20 +802,11 @@ def procesar_respuesta(user_input):
                 avatar_emoji = partes[1]
                 
                 with st.chat_message("assistant", avatar=avatar_emoji):
-                    with st.spinner(f"✨ {nombre_agente} está pensando..."):
+                    with st.spinner(f"⚡ {nombre_agente} está procesando..."):
                         try:
                             historial_reciente = st.session_state.messages[-12:] 
                             
                             system_prompt = config["prompt"]
-                            
-                            if i == 0 and bucle_actual == 0:
-                                system_prompt += "\n\nNOTA: Eres el primer agente en responder. Puedes hacer un saludo MUY breve (ej: '¡Hola!') y luego dar tu respuesta directo al grano."
-                            else:
-                                system_prompt += "\n\nNOTA CRÍTICA: Ya hubo respuestas previas. NO saludes, NO te presentes y NO repitas lo que ya se dijo. Ve directo a tu punto principal."
-                                
-                            if bucle_actual > 0:
-                                system_prompt += "\nEstamos en una ronda de refinamiento. Revisa lo que se ha dicho, refina tu postura o aporta algo nuevo MUY brevemente sin repetir."
-
                             if es_pro or es_multipro:
                                 system_prompt = system_prompt.replace("Sé EXTREMADAMENTE BREVE. Máximo 3 oraciones.", "NO TIENES LÍMITE DE LONGITUD, redacta una respuesta extensa, profunda y detallada.")
                                 system_prompt = system_prompt.replace("Sé EXTREMADAMENTE BREVE. Máximo 4 oraciones.", "NO TIENES LÍMITE DE LONGITUD, redacta una respuesta extensa, profunda y detallada.")
@@ -909,26 +814,12 @@ def procesar_respuesta(user_input):
                             else:
                                 max_tokens_api = 200
 
-                            if hablar_en_plural:
-                                system_prompt += "\nHabla en PLURAL si es necesario (ej: 'Nosotros pensamos')."
-                            
                             mensajes_api = [{"role": "system", "content": system_prompt}]
-                            
                             for msg in historial_reciente:
-                                if msg["role"] == "assistant" and msg.get("avatar") != avatar_emoji:
-                                    mensajes_api.append({"role": "user", "content": f"(Otro agente dijo: {msg['content']})"})
-                                else:
-                                    mensajes_api.append({"role": msg["role"], "content": msg["content"]})
-                            
-                            merged_mensajes = [mensajes_api[0]]
-                            for m in mensajes_api[1:]:
-                                if m["role"] == "user" and merged_mensajes[-1]["role"] == "user":
-                                    merged_mensajes[-1]["content"] += "\n" + m["content"]
-                                else:
-                                    merged_mensajes.append(m)
-                                    
-                            if merged_mensajes[-1]["role"] == "assistant":
-                                merged_mensajes.append({"role": "user", "content": f"Ahora te toca a ti, {nombre_agente}. ¡Dime qué opinas!"})
+                                mensajes_api.append({"role": msg["role"], "content": msg["content"]})
+                                
+                            if mensajes_api[-1]["role"] == "assistant":
+                                mensajes_api.append({"role": "user", "content": f"Ahora te toca a ti, {nombre_agente}. ¡Dime qué opinas!"})
                             
                             key_name = config["api_key_name"]
                             api_key_a_usar = st.secrets["groq"][key_name]
@@ -940,7 +831,7 @@ def procesar_respuesta(user_input):
                             
                             stream = client.chat.completions.create(
                                 model="llama-3.1-8b-instant",
-                                messages=merged_mensajes,
+                                messages=mensajes_api,
                                 stream=True,
                                 temperature=0.7,
                                 max_tokens=max_tokens_api
@@ -952,6 +843,10 @@ def procesar_respuesta(user_input):
                                 
                             st.session_state.messages.append({"role": "assistant", "content": response, "avatar": avatar_emoji})
                             st.session_state.last_response = response
+                            
+                            if i < len(quemas_activos) - 1:
+                                time.sleep(2)
+                                
                         except Exception as e:
                             error_msg = str(e).lower()
                             if "rate limit" in error_msg or "429" in error_msg or "limit" in error_msg:
@@ -966,34 +861,127 @@ def procesar_respuesta(user_input):
                                 st.session_state.messages.append({"role": "assistant", "content": error_text, "avatar": avatar_emoji})
                                 continue 
 
-    verificar_correo_quincenal(st.session_state.usuario_actual)
+        # MODO NORMAL O BUCLES
+        else:
+            for bucle_actual in range(num_bucles):
+                if num_bucles > 1:
+                    st.markdown(f"<hr style='margin: 10px 0; border: 1px solid #2ECC71;'><h4 style='text-align:center; color:#2ECC71;'>🔄 Ronda {bucle_actual + 1} de {num_bucles}</h4><hr style='margin: 10px 0; border: 1px solid #2ECC71;'>", unsafe_allow_html=True)
 
-# --- INTERFAZ DE USUARIO Y BLOQUEO DE 40s ---
-if st.session_state.cooldown_hasta and datetime.now() < st.session_state.cooldown_hasta:
-    tiempo_restante = st.session_state.cooldown_hasta - datetime.now()
-    segundos = int(tiempo_restante.total_seconds()) + 1
-    st.warning(f"🌿 Respira, analiza nuestra comunicación... Podrás escribir de nuevo en **{segundos} segundos**. ¡Adelante, siempre adelante!")
-    time.sleep(1) 
-    st.rerun() 
-else:
-    if st.session_state.cooldown_hasta:
-        st.session_state.cooldown_hasta = None 
+                for i, agente_key in enumerate(quemas_activos):
+                    config = SOMBREROS[agente_key]
+                    partes = agente_key.rsplit(" ", 1)
+                    nombre_agente = partes[0]
+                    avatar_emoji = partes[1]
+                    
+                    with st.chat_message("assistant", avatar=avatar_emoji):
+                        with st.spinner(f"✨ {nombre_agente} está pensando..."):
+                            try:
+                                historial_reciente = st.session_state.messages[-12:] 
+                                
+                                system_prompt = config["prompt"]
+                                
+                                if i == 0 and bucle_actual == 0:
+                                    system_prompt += "\n\nNOTA: Eres el primer agente en responder. Puedes hacer un saludo MUY breve (ej: '¡Hola!') y luego dar tu respuesta directo al grano."
+                                else:
+                                    system_prompt += "\n\nNOTA CRÍTICA: Ya hubo respuestas previas. NO saludes, NO te presentes y NO repitas lo que ya se dijo. Ve directo a tu punto principal."
+                                    
+                                if bucle_actual > 0:
+                                    system_prompt += "\nEstamos en una ronda de refinamiento. Revisa lo que se ha dicho, refina tu postura o aporta algo nuevo MUY brevemente sin repetir."
 
-    placeholder_text = f"✏️ Escribe tu pregunta a los agentes... 😊🏃‍♂️"
-    if prompt := st.chat_input(placeholder_text):
-        procesar_respuesta(prompt)
+                                if es_pro or es_multipro:
+                                    system_prompt = system_prompt.replace("Sé EXTREMADAMENTE BREVE. Máximo 3 oraciones.", "NO TIENES LÍMITE DE LONGITUD, redacta una respuesta extensa, profunda y detallada.")
+                                    system_prompt = system_prompt.replace("Sé EXTREMADAMENTE BREVE. Máximo 4 oraciones.", "NO TIENES LÍMITE DE LONGITUD, redacta una respuesta extensa, profunda y detallada.")
+                                    max_tokens_api = 800 
+                                else:
+                                    max_tokens_api = 200
 
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        b_col1, b_col2 = st.columns(2)
-        with b_col1:
-            if st.button("🔊 Escuchar", use_container_width=True):
-                if st.session_state.last_response:
-                    speak_js(st.session_state.last_response)
-                else:
-                    speak_js("✨ ¡Hola! Pregúntame algo y te ayudaré")
-        with b_col2:
-            if st.button("🔄 Reiniciar", use_container_width=True):
-                st.session_state.messages = []
-                st.session_state.last_response = ""
-                st.rerun()
+                                if hablar_en_plural:
+                                    system_prompt += "\nHabla en PLURAL si es necesario (ej: 'Nosotros pensamos')."
+                                
+                                mensajes_api = [{"role": "system", "content": system_prompt}]
+                                
+                                for msg in historial_reciente:
+                                    if msg["role"] == "assistant" and msg.get("avatar") != avatar_emoji:
+                                        mensajes_api.append({"role": "user", "content": f"(Otro agente dijo: {msg['content']})"})
+                                    else:
+                                        mensajes_api.append({"role": msg["role"], "content": msg["content"]})
+                                
+                                merged_mensajes = [mensajes_api[0]]
+                                for m in mensajes_api[1:]:
+                                    if m["role"] == "user" and merged_mensajes[-1]["role"] == "user":
+                                        merged_mensajes[-1]["content"] += "\n" + m["content"]
+                                    else:
+                                        merged_mensajes.append(m)
+                                        
+                                if merged_mensajes[-1]["role"] == "assistant":
+                                    merged_mensajes.append({"role": "user", "content": f"Ahora te toca a ti, {nombre_agente}. ¡Dime qué opinas!"})
+                                
+                                key_name = config["api_key_name"]
+                                api_key_a_usar = st.secrets["groq"][key_name]
+                                
+                                client = OpenAI(
+                                    base_url="https://api.groq.com/openai/v1",
+                                    api_key=api_key_a_usar
+                                )
+                                
+                                stream = client.chat.completions.create(
+                                    model="llama-3.1-8b-instant",
+                                    messages=merged_mensajes,
+                                    stream=True,
+                                    temperature=0.7,
+                                    max_tokens=max_tokens_api
+                                )
+                                response = st.write_stream(stream_con_retraso(stream))
+                                
+                                if not response.strip():
+                                    response = f"¡Hola! Soy {nombre_agente}. ¡Estoy listo para ayudarte! 🌟"
+                                    
+                                st.session_state.messages.append({"role": "assistant", "content": response, "avatar": avatar_emoji})
+                                st.session_state.last_response = response
+                            except Exception as e:
+                                error_msg = str(e).lower()
+                                if "rate limit" in error_msg or "429" in error_msg or "limit" in error_msg:
+                                    st.session_state.cooldown_hasta = datetime.now() + timedelta(seconds=40)
+                                    msg_enfriamiento = "🌿 Respira, analiza nuestra comunicación... Muchos amigos están hablando conmigo ahora mismo. ¡Inténtalo de nuevo en 40 segundos!"
+                                    st.warning(msg_enfriamiento)
+                                    st.session_state.messages.append({"role": "assistant", "content": msg_enfriamiento, "avatar": "⏳"})
+                                    st.rerun()
+                                else:
+                                    error_text = f"Ups... {nombre_agente} se distrajo. ¡Intenta de nuevo!"
+                                    st.error(error_text)
+                                    st.session_state.messages.append({"role": "assistant", "content": error_text, "avatar": avatar_emoji})
+                                    continue 
+
+        verificar_correo_quincenal(st.session_state.usuario_actual)
+
+    # --- INTERFAZ DE USUARIO Y BLOQUEO DE 40s ---
+    if st.session_state.cooldown_hasta and datetime.now() < st.session_state.cooldown_hasta:
+        tiempo_restante = st.session_state.cooldown_hasta - datetime.now()
+        segundos = int(tiempo_restante.total_seconds()) + 1
+        st.warning(f"🌿 Respira, analiza nuestra comunicación... Podrás escribir de nuevo en **{segundos} segundos**. ¡Adelante, siempre adelante!")
+        time.sleep(1) 
+        st.rerun() 
+    else:
+        if st.session_state.cooldown_hasta:
+            st.session_state.cooldown_hasta = None 
+
+        placeholder_text = f"✏️ Escribe tu pregunta a los agentes... 😊🏃‍♂️"
+        if prompt := st.chat_input(placeholder_text):
+            procesar_respuesta(prompt)
+
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            b_col1, b_col2 = st.columns(2)
+            with b_col1:
+                if st.button("🔊 Escuchar", use_container_width=True):
+                    if st.session_state.last_response:
+                        speak_js(st.session_state.last_response)
+                    else:
+                        speak_js("✨ ¡Hola! Pregúntame algo y te ayudaré")
+            with b_col2:
+                if st.button("🔄 Reiniciar", use_container_width=True):
+                    st.session_state.messages = []
+                    st.session_state.last_response = ""
+                    st.rerun()
+
+chat_fragment()
